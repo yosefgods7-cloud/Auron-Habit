@@ -5,11 +5,13 @@ import { Habits } from './components/Habits';
 import { Intel } from './components/Intel';
 import { Mindset } from './components/Mindset';
 import { Navigation } from './components/Navigation';
+import { AddHabitModal } from './components/AddHabitModal';
 
 export default function App() {
   const settings = useStore((state) => state.settings);
   const [activeTab, setActiveTab] = useState<'arena'|'habits'|'intel'|'mindset'>('arena');
   const [mounted, setMounted] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -98,7 +100,9 @@ export default function App() {
         {activeTab === 'mindset' && <Mindset />}
       </main>
 
-      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} onAddClick={() => setIsAddModalOpen(true)} />
+      
+      {isAddModalOpen && <AddHabitModal onClose={() => setIsAddModalOpen(false)} />}
     </div>
   );
 }

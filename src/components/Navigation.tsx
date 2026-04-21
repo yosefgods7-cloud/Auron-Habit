@@ -1,7 +1,7 @@
 import { cn } from '../lib/utils';
 import { useStore } from '../lib/store';
 
-export function Navigation({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (t: any) => void }) {
+export function Navigation({ activeTab, setActiveTab, onAddClick }: { activeTab: string, setActiveTab: (t: any) => void, onAddClick: () => void }) {
   const addHabitBtn = activeTab === 'habits' || activeTab === 'arena';
 
   const navItems = [
@@ -30,22 +30,7 @@ export function Navigation({ activeTab, setActiveTab }: { activeTab: string, set
       <div className="relative -top-6">
          <button 
            className="w-14 h-14 bg-[#7c6aff] rounded-xl shadow-[0_0_20px_rgba(124,106,255,0.4)] flex items-center justify-center text-white text-3xl font-light border-2 border-[#0d0d14] active:scale-95 transition-transform"
-           onClick={() => {
-             useStore.getState().addHabit({
-               name: 'New Habit',
-               icon: '💪',
-               category: 'Physical',
-               protocol: 'General',
-               frequency: { type: 'daily' },
-               timeslot: 'anytime',
-               color: '#7c6aff',
-               difficulty: 1,
-               why: '',
-               reminderTime: null,
-               graceDay: false,
-             });
-             setActiveTab('habits');
-           }}
+           onClick={onAddClick}
          >
            +
          </button>
