@@ -12,12 +12,24 @@ export function AlarmManager() {
     // 1. Ask for Native Permissions
     const setupNativeNotifications = async () => {
       try {
-        const perm = await LocalNotifications.checkPermissions();
+        let perm = await LocalNotifications.checkPermissions();
         if (perm.display !== 'granted') {
-           await LocalNotifications.requestPermissions();
+           perm = await LocalNotifications.requestPermissions();
+        }
+
+        if (perm.display === 'granted') {
+          // CREATE CHANNEL (Critical for Android 8.0+)
+          await LocalNotifications.createChannel({
+            id: 'auron-alarms',
+            name: 'Auron Alarms',
+            description: 'Strict protocol reminders',
+            importance: 5, // Highest importance, ensures popup
+            visibility: 1, // Public
+            vibration: true,
+          });
         }
       } catch (e) {
-        console.log('Not running in native capacitor wrapper for notifications');
+        console.log('Not running in native app');
       }
     };
     setupNativeNotifications();
@@ -25,7 +37,7 @@ export function AlarmManager() {
     // 2. Schedule native notifications immediately if habits update
     const scheduleNativeBackground = async () => {
       try {
-        await LocalNotifications.cancel({ notifications: [{ id: 1 }, { id: 2 }, { id: 3 }] }); // Quick clear
+        await LocalNotifications.cancel({ notifications: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }] }); // Quick clear
         
         const activeHabits = habits.filter(h => !h.archived && h.reminderTime && h.alarmEnabled);
         
@@ -36,11 +48,12 @@ export function AlarmManager() {
             id: idCounter++,
             title: `AURON: ${h.name}`,
             body: h.description || 'Time to complete your protocol.',
+            channelId: 'auron-alarms',
             schedule: {
               on: { hour: hours, minute: mins },
               allowWhileIdle: true
             },
-            smallIcon: 'ic_stat_icon_default', 
+            smallIcon: 'ic_launcher_round', 
           };
         });
 

@@ -1,5 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
-  <rect width="100" height="100" fill="#0d0d14"/>
-  <path d="M50 15 L90 35 L90 85 L50 95 L10 85 L10 35 Z" fill="none" stroke="#7c6aff" stroke-width="6" />
-  <path d="M50 35 Q60 55 50 85 Q40 55 50 35" fill="#7c6aff" />
+  <rect width="100" height="100" fill="#09090b"/>
+  <path d="M 50 15 L 85 85 L 65 85 L 57 65 L 43 65 L 35 85 L 15 85 Z M 50 35 L 46 50 L 54 50 Z" fill="url(#primaryGradient)" fill-rule="evenodd"/>
+  <defs>
+    <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9d8DF1" />
+      <stop offset="100%" stop-color="#5a45f2" />
+    </linearGradient>
+  </defs>
 </svg>

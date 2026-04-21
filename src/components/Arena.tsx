@@ -19,6 +19,18 @@ export function Arena() {
   const today = format(new Date(), 'yyyy-MM-dd');
   const todayLogs = logs.filter(l => l.date === today);
   const todayData = daily[today] || {};
+  const todayTasks = (useStore(state => state.dailyTasks) || []).filter(t => t.date === today);
+  
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [isAddingTask, setIsAddingTask] = useState(false);
+
+  const handleAddTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskTitle.trim()) return;
+    useStore.getState().addDailyTask({ title: newTaskTitle.trim(), date: today, completed: false });
+    setNewTaskTitle('');
+    setIsAddingTask(false);
+  };
 
   const [aiBrief, setAiBrief] = useState<string | null>(todayData.forgeBrief || null);
   const [isBriefLoading, setIsBriefLoading] = useState(false);
@@ -325,6 +337,61 @@ No intro. No padding. Max 60 words.`;
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        
+        {/* DAILY ONCE-OFF TASKS */}
+        <section className="space-y-3 lg:col-span-2">
+           <div className="flex justify-between items-end border-b border-app-border pb-1">
+             <h3 className="text-xs font-bold uppercase tracking-widest text-app-text-muted">Today's Targets</h3>
+             <button onClick={() => setIsAddingTask(!isAddingTask)} className="text-[10px] font-bold uppercase text-app-primary">
+               + Add Target
+             </button>
+           </div>
+           
+           {isAddingTask && (
+             <form onSubmit={handleAddTask} className="flex gap-2">
+               <input 
+                 type="text" 
+                 autoFocus
+                 value={newTaskTitle}
+                 onChange={(e) => setNewTaskTitle(e.target.value)}
+                 placeholder="What must be done today?" 
+                 className="flex-1 bg-app-elevated border border-app-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-app-primary"
+               />
+               <button type="submit" className="bg-app-primary text-white px-3 py-2 rounded text-sm font-bold">Add</button>
+             </form>
+           )}
+
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+             {todayTasks.length === 0 && !isAddingTask && (
+                <p className="text-xs text-app-text-muted italic py-2 md:col-span-2 lg:col-span-3">No one-off targets set for today.</p>
+             )}
+             {todayTasks.map(task => (
+               <div key={task.id} className="flex items-center justify-between p-3 rounded-lg bg-app-surface border border-app-border group">
+                 <div className="flex items-center gap-3 overflow-hidden">
+                   <button 
+                     onClick={() => useStore.getState().toggleDailyTask(task.id)}
+                     className={cn(
+                       "w-5 h-5 rounded border flex justify-center items-center shrink-0 transition-colors",
+                       task.completed ? "bg-app-primary border-app-primary text-white" : "border-app-text-muted text-transparent"
+                     )}
+                   >
+                     <span className="text-[10px]">✓</span>
+                   </button>
+                   <span className={cn("text-sm truncate", task.completed ? "line-through text-app-text-muted" : "text-app-text-main")}>
+                     {task.title}
+                   </span>
+                 </div>
+                 <button 
+                   onClick={() => useStore.getState().deleteDailyTask(task.id)}
+                   className="text-app-text-muted hover:text-app-danger opacity-0 group-hover:opacity-100 transition-opacity px-2"
+                 >
+                   ×
+                 </button>
+               </div>
+             ))}
+           </div>
+        </section>
+
         {timeslots.map((slot) => {
           let slotHabits = habits.filter(h => !h.archived && h.timeslot === slot.id);
           

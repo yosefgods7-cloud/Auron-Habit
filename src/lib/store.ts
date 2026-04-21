@@ -55,6 +55,14 @@ export interface DailyData {
   gamePlan?: any;
 }
 
+export interface DailyTask {
+  id: string;
+  title: string;
+  completed: boolean;
+  date: string;
+  createdAt: string;
+}
+
 export interface GrowthLog {
   id: string;
   date: string;
@@ -65,6 +73,7 @@ export interface GrowthLog {
 interface AppState {
   habits: Habit[];
   logs: DayLog[];
+  dailyTasks: DailyTask[];
   daily: Record<string, DailyData>;
   growth: GrowthLog[];
   settings: {
@@ -93,6 +102,11 @@ interface AppState {
   archiveHabit: (id: string) => void;
   toggleLog: (habitId: string, date: string, xpEarned: number) => void;
   skipHabit: (habitId: string, date: string, reason: string) => void;
+  
+  addDailyTask: (task: Omit<DailyTask, 'id' | 'createdAt'>) => void;
+  toggleDailyTask: (id: string) => void;
+  deleteDailyTask: (id: string) => void;
+
   updateDaily: (date: string, updates: Partial<DailyData>) => void;
   addGrowthLog: (log: Omit<GrowthLog, 'id' | 'date'>) => void;
   updateSettings: (settings: Partial<AppState['settings']>) => void;
@@ -107,6 +121,7 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       habits: [],
       logs: [],
+      dailyTasks: [],
       daily: {},
       growth: [],
       settings: {
@@ -171,6 +186,18 @@ export const useStore = create<AppState>()(
         }
         return { logs: newLogs };
       }),
+
+      addDailyTask: (task) => set((state) => ({
+        dailyTasks: [...(state.dailyTasks || []), { ...task, id: generateId(), createdAt: new Date().toISOString() }]
+      })),
+
+      toggleDailyTask: (id) => set((state) => ({
+        dailyTasks: state.dailyTasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t)
+      })),
+
+      deleteDailyTask: (id) => set((state) => ({
+        dailyTasks: state.dailyTasks.filter(t => t.id !== id)
+      })),
 
       updateDaily: (date, updates) => set((state) => {
         const safeDaily = state.daily || {};
