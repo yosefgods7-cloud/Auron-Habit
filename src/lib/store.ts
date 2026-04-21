@@ -1,0 +1,172 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { generateId } from './utils';
+
+export type HabitCategory = 'Physical' | 'Mental' | 'Social' | 'Recovery' | 'Creative' | 'Spiritual' | 'Productivity';
+export type Timeslot = 'morning' | 'afternoon' | 'evening' | 'anytime';
+
+export interface Habit {
+  id: string;
+  name: string;
+  icon: string;
+  category: HabitCategory;
+  protocol: string;
+  frequency: { type: 'daily' | 'days' | 'times', days?: boolean[], times?: number };
+  timeslot: Timeslot;
+  color: string;
+  difficulty: number;
+  why: string;
+  reminderTime: string | null;
+  graceDay: boolean;
+  order: number;
+  archived: boolean;
+  createdAt: string;
+}
+
+export interface DayLog {
+  habitId: string;
+  date: string;
+  completed: boolean;
+  partial: number;
+  note: string;
+  completedAt: string | null;
+  xpEarned: number;
+}
+
+export interface DailyReflection {
+  good: string;
+  improve: string;
+  grateful: string;
+}
+
+export interface DailyData {
+  mood?: number;
+  intention?: string;
+  reflection?: DailyReflection;
+  forgeScore?: number;
+  xpEarned?: number;
+  stoicResponse?: string;
+}
+
+export interface GrowthLog {
+  id: string;
+  date: string;
+  type: 'win' | 'lesson' | 'intention' | 'thought';
+  text: string;
+}
+
+interface AppState {
+  habits: Habit[];
+  logs: DayLog[];
+  daily: Record<string, DailyData>;
+  growth: GrowthLog[];
+  settings: {
+    theme: string;
+    userName: string;
+    avatarEmoji: string;
+    onboardingDone: boolean;
+  };
+  meta: {
+    totalXP: number;
+    level: number;
+    installDate: string;
+    totalDaysActive: number;
+    totalRepsCompleted: number;
+    currentStreak: number;
+    longestStreak: number;
+  };
+  
+  // Actions
+  addHabit: (habit: Omit<Habit, 'id' | 'createdAt' | 'archived' | 'order'>) => void;
+  updateHabit: (id: string, updates: Partial<Habit>) => void;
+  archiveHabit: (id: string) => void;
+  toggleLog: (habitId: string, date: string, xpEarned: number) => void;
+  updateDaily: (date: string, updates: Partial<DailyData>) => void;
+  addGrowthLog: (log: Omit<GrowthLog, 'id' | 'date'>) => void;
+  updateSettings: (settings: Partial<AppState['settings']>) => void;
+  completeOnboarding: (userName: string, avatarEmoji: string, defaultHabits: Habit[]) => void;
+  earnXp: (amount: number) => void;
+}
+
+export const useStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      habits: [],
+      logs: [],
+      daily: {},
+      growth: [],
+      settings: {
+        theme: 'obsidian',
+        userName: 'Warrior',
+        avatarEmoji: '🦁',
+        onboardingDone: false,
+      },
+      meta: {
+        totalXP: 0,
+        level: 1,
+        installDate: new Date().toISOString(),
+        totalDaysActive: 0,
+        totalRepsCompleted: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+      },
+
+      addHabit: (habit) => set((state) => ({
+        habits: [...state.habits, { ...habit, id: generateId(), createdAt: new Date().toISOString(), archived: false, order: state.habits.length }]
+      })),
+
+      updateHabit: (id, updates) => set((state) => ({
+        habits: state.habits.map((h) => h.id === id ? { ...h, ...updates } : h)
+      })),
+
+      archiveHabit: (id) => set((state) => ({
+        habits: state.habits.map((h) => h.id === id ? { ...h, archived: true } : h)
+      })),
+
+      toggleLog: (habitId, date, xpEarned) => set((state) => {
+        const existingInfo = state.logs.find(l => l.habitId === habitId && l.date === date);
+        const isCompleted = existingInfo ? existingInfo.completed : false;
+        
+        let newLogs;
+        if (existingInfo) {
+          newLogs = state.logs.map(l => l.habitId === habitId && l.date === date ? 
+            { ...l, completed: !isCompleted, partial: !isCompleted ? 1 : 0, xpEarned: !isCompleted ? xpEarned : 0 } : l);
+        } else {
+          newLogs = [...state.logs, {
+            habitId, date, completed: true, partial: 1, note: '', completedAt: new Date().toISOString(), xpEarned
+          }];
+        }
+        
+        return { logs: newLogs };
+      }),
+
+      updateDaily: (date, updates) => set((state) => ({
+        daily: { ...state.daily, [date]: { ...state.daily[date], ...updates } }
+      })),
+
+      addGrowthLog: (log) => set((state) => ({
+        growth: [{ ...log, id: generateId(), date: new Date().toISOString() }, ...state.growth]
+      })),
+
+      updateSettings: (updates) => set((state) => ({
+        settings: { ...state.settings, ...updates }
+      })),
+
+      completeOnboarding: (userName, avatarEmoji, defaultHabits) => set((state) => ({
+        settings: { ...state.settings, userName, avatarEmoji, onboardingDone: true },
+        habits: [...state.habits, ...defaultHabits.map(h => ({ ...h, id: generateId(), createdAt: new Date().toISOString(), archived: false, order: state.habits.length }))]
+      })),
+
+      earnXp: (amount) => set((state) => {
+        const newTotal = state.meta.totalXP + amount;
+        return {
+          meta: {
+            ...state.meta,
+            totalXP: newTotal,
+          }
+        };
+      })
+    }),
+    { name: 'auron-storage' }
+  )
+);
