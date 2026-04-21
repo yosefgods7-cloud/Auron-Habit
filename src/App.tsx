@@ -9,6 +9,7 @@ import { AddHabitModal } from './components/AddHabitModal';
 import { Settings } from './components/Settings';
 import { AlarmManager } from './components/AlarmManager';
 import { LockScreen } from './components/LockScreen';
+import { Onboarding } from './components/Onboarding';
 
 export default function App() {
   const settings = useStore((state) => state.settings);
@@ -32,45 +33,7 @@ export default function App() {
   }
 
   if (!settings.onboardingDone) {
-    return (
-      <div className="w-full h-full bg-app-bg text-app-text-main font-sans flex flex-col items-center justify-center p-6 text-center select-none overflow-hidden">
-        <h1 className="text-4xl font-bold tracking-tighter uppercase text-app-primary mb-4">AURON</h1>
-        <p className="text-app-text-muted mb-8">Forge Who You Become.</p>
-        <button 
-          onClick={() => useStore.getState().completeOnboarding('Warrior', '🦁', [
-            {
-              name: 'Cold Shower',
-              icon: '🧊',
-              category: 'Physical',
-              protocol: 'Morning Warrior',
-              frequency: { type: 'daily' },
-              timeslot: 'morning',
-              color: 'var(--color-app-success)',
-              difficulty: 4,
-              why: 'Discipline',
-              reminderTime: null,
-              graceDay: false
-            },
-            {
-              name: 'Deep Work (2h)',
-              icon: '💻',
-              category: 'Productivity',
-              protocol: 'Work',
-              frequency: { type: 'daily' },
-              timeslot: 'afternoon',
-              color: 'var(--color-app-info)',
-              difficulty: 5,
-              why: 'Focus',
-              reminderTime: null,
-              graceDay: false
-            }
-          ])}
-          className="px-8 py-3 bg-app-primary text-white font-bold rounded-lg shadow-[0_4px_16px_rgba(124,106,255,0.4)]"
-        >
-          Begin Training
-        </button>
-      </div>
-    );
+    return <Onboarding />;
   }
 
   return (

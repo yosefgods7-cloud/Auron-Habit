@@ -1,49 +1,80 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '../lib/store';
 import { format } from 'date-fns';
-import { cn } from '../lib/utils';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 export function AlarmManager() {
   const habits = useStore(state => state.habits);
   const [activeAlarm, setActiveAlarm] = useState<string | null>(null);
-  
-  // Track what we've already alerted today to prevent looping infinitely
-  // Using simple session state - resets if user reloads but good enough for PWA standard
   const [alertedToday, setAlertedToday] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    // Request notification permission if not granted
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission();
+    // 1. Ask for Native Permissions
+    const setupNativeNotifications = async () => {
+      try {
+        const perm = await LocalNotifications.checkPermissions();
+        if (perm.display !== 'granted') {
+           await LocalNotifications.requestPermissions();
+        }
+      } catch (e) {
+        console.log('Not running in native capacitor wrapper for notifications');
       }
-    }
+    };
+    setupNativeNotifications();
+    
+    // 2. Schedule native notifications immediately if habits update
+    const scheduleNativeBackground = async () => {
+      try {
+        await LocalNotifications.cancel({ notifications: [{ id: 1 }, { id: 2 }, { id: 3 }] }); // Quick clear
+        
+        const activeHabits = habits.filter(h => !h.archived && h.reminderTime && h.alarmEnabled);
+        
+        let idCounter = 1;
+        const pending = activeHabits.map((h) => {
+          const [hours, mins] = h.reminderTime!.split(':').map(Number);
+          return {
+            id: idCounter++,
+            title: `AURON: ${h.name}`,
+            body: h.description || 'Time to complete your protocol.',
+            schedule: {
+              on: { hour: hours, minute: mins },
+              allowWhileIdle: true
+            },
+            smallIcon: 'ic_stat_icon_default', 
+          };
+        });
 
+        if (pending.length > 0) {
+          await LocalNotifications.schedule({ notifications: pending });
+        }
+      } catch (e) {
+        // Failing silently if not in native env
+      }
+    };
+    scheduleNativeBackground();
+
+    // 3. Fallback Web Interval (for web mode or foreground custom UI popups)
     const interval = setInterval(() => {
       const activeHabits = habits.filter(h => !h.archived && h.reminderTime && h.alarmEnabled);
       const now = new Date();
-      // Format current time HH:mm
       const currentTimeStr = format(now, 'HH:mm');
 
-      // Check if any habit needs to alert
       for (const habit of activeHabits) {
         if (habit.reminderTime === currentTimeStr) {
            const alertKey = `${habit.id}-${format(now, 'yyyy-MM-dd')}`;
            if (!alertedToday[alertKey]) {
-              // Trigger Alert
-              triggerAlert(habit.name, habit.description || 'Time to complete your protocol.');
+              triggerWebAlert(habit.name, habit.description || 'Time to complete your protocol.');
               setAlertedToday(prev => ({ ...prev, [alertKey]: true }));
               setActiveAlarm(habit.name);
            }
         }
       }
-    }, 15000); // Check every 15 seconds
+    }, 15000); 
 
     return () => clearInterval(interval);
   }, [habits, alertedToday]);
 
-  const triggerAlert = (title: string, body: string) => {
-    // 1. Web Notification (Triggers Native Android push if PWA installed)
+  const triggerWebAlert = (title: string, body: string) => {
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
       new Notification(`AURON: ${title}`, {
          body,
