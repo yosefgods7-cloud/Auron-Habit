@@ -20,15 +20,17 @@ jobs:
       - name: Build Web App
         run: npm run build
 
-      - name: Install Capacitor CLI
-        run: npm install @capacitor/cli @capacitor/core @capacitor/android
-
       - name: Initialize Capacitor
         run: |
-          npx cap init Auron app.auron.habit -w dist --web-dir dist
+          if [ ! -f capacitor.config.ts ] && [ ! -f capacitor.config.json ]; then
+            npx cap init Auron app.auron.habit --web-dir dist
+          fi
 
       - name: Add Android Platform
-        run: npx cap add android
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
 
       - name: Sync Android
         run: npx cap sync android
@@ -41,7 +43,9 @@ jobs:
 
       - name: Build APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

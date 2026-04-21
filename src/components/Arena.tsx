@@ -45,19 +45,18 @@ const isSunday = format(new Date(), 'EEEE') === 'Sunday';
   const [hardQuestion, setHardQuestion] = useState<string | null>(null);
   const [isHardQLoading, setIsHardQLoading] = useState(false);
 
-  useEffect(() => {
-    async function loadHardQuestion() {
-      if (!settings.geminiKey || !isSunday) return;
-      const cacheKey = `hardq_${currentWeek}`;
-      const cached = useStore.getState().aiCache['ai_' + cacheKey];
-      if (cached) {
-        setHardQuestion(cached.text);
-        return;
-      }
-      
-      setIsHardQLoading(true);
-      try {
-        const prompt = `Generate ONE genuinely uncomfortable question for this warrior.
+  const loadHardQuestion = async () => {
+    if (!settings.geminiKey || !isSunday) return;
+    const cacheKey = `hardq_${currentWeek}`;
+    const cached = useStore.getState().aiCache['ai_' + cacheKey];
+    if (cached) {
+      setHardQuestion(cached.text);
+      return;
+    }
+    
+    setIsHardQLoading(true);
+    try {
+      const prompt = `Generate ONE genuinely uncomfortable question for this warrior.
 Rules:
 - Based on something SPECIFIC in their data
 - A question they might be avoiding
@@ -67,38 +66,46 @@ Rules:
 - 2-3 sentences max
 
 Output ONLY the question. No intro. No context. Max 40 words.`;
-        const res = await callGemini(prompt, 120, cacheKey);
-        setHardQuestion(res);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsHardQLoading(false);
-      }
+      const res = await callGemini(prompt, 120, cacheKey);
+      setHardQuestion(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsHardQLoading(false);
     }
-    loadHardQuestion();
-  }, [settings.geminiKey, isSunday, currentWeek]);
+  };
+
+  const loadBrief = async () => {
+    if (!settings.geminiKey || todayData.forgeBrief || isBriefLoading) return;
+    
+    setIsBriefLoading(true);
+    try {
+      const text = await callGemini(
+        "Write a 2-sentence personalized morning brief for this warrior. Reference their actual habits and streaks. Be direct, motivating, coach-like. No fluff. End with one sharp action directive. Max 60 words.", 
+        150, 
+        `brief_${today}`
+      );
+      setAiBrief(text);
+      updateDaily(today, { forgeBrief: text });
+    } catch (err) {
+      console.error("Failed to load brief", err);
+    } finally {
+      setIsBriefLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadBrief() {
-      if (!settings.geminiKey || todayData.forgeBrief || isBriefLoading) return;
-      
-      setIsBriefLoading(true);
-      try {
-        const text = await callGemini(
-          "Write a 2-sentence personalized morning brief for this warrior. Reference their actual habits and streaks. Be direct, motivating, coach-like. No fluff. End with one sharp action directive. Max 60 words.", 
-          150, 
-          `brief_${today}`
-        );
-        setAiBrief(text);
-        updateDaily(today, { forgeBrief: text });
-      } catch (err) {
-        console.error("Failed to load brief", err);
-      } finally {
-        setIsBriefLoading(false);
-      }
+    if (todayData.forgeBrief) {
+       setAiBrief(todayData.forgeBrief);
     }
-    loadBrief();
-  }, [settings.geminiKey, today, todayData.forgeBrief]);
+    if (isSunday) {
+       const cacheKey = `hardq_${currentWeek}`;
+       const cached = useStore.getState().aiCache['ai_' + cacheKey];
+       if (cached) {
+         setHardQuestion(cached.text);
+       }
+    }
+  }, [todayData.forgeBrief, isSunday, currentWeek]);
 
   const { momentum } = getMomentumData();
   const pct = calculateForgeScore(today);
@@ -228,7 +235,15 @@ No intro. No padding. Max 60 words.`;
                    <p className="text-sm md:text-base text-app-orange font-serif italic leading-relaxed">{hardQuestion}</p>
                 </div>
              ) : (
-                <p className="text-sm text-app-danger py-2">Question unavailable.</p>
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 py-2">
+                   <p className="text-sm text-app-text-muted text-center lg:text-left">Ready to face today's hard question?</p>
+                   <button 
+                     onClick={loadHardQuestion}
+                     className="px-4 py-1.5 bg-app-elevated text-app-orange border border-app-orange/30 text-xs font-bold uppercase rounded hover:bg-app-orange/10 transition-colors"
+                   >
+                     Generate Question
+                   </button>
+                </div>
              )
           ) : settings.geminiKey ? (
              isBriefLoading ? (
@@ -239,7 +254,15 @@ No intro. No padding. Max 60 words.`;
                    <p className="text-[9px] text-app-text-muted mt-2 uppercase tracking-widest">Powered by Gemini · Generated Today</p>
                 </div>
              ) : (
-                <p className="text-sm text-app-danger py-2">Brief unavailable. Check connection.</p>
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 py-2">
+                   <p className="text-sm text-app-text-muted text-center lg:text-left">Start your day with an elite tactical brief.</p>
+                   <button 
+                     onClick={loadBrief}
+                     className="px-4 py-1.5 bg-app-elevated text-app-primary border border-app-primary/30 text-xs font-bold uppercase rounded hover:bg-app-primary/10 transition-colors shrink-0"
+                   >
+                     Generate Brief
+                   </button>
+                </div>
              )
           ) : (
             <>
