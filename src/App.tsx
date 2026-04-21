@@ -8,12 +8,14 @@ import { Navigation } from './components/Navigation';
 import { AddHabitModal } from './components/AddHabitModal';
 import { Settings } from './components/Settings';
 import { AlarmManager } from './components/AlarmManager';
+import { LockScreen } from './components/LockScreen';
 
 export default function App() {
   const settings = useStore((state) => state.settings);
   const [activeTab, setActiveTab] = useState<'arena'|'habits'|'intel'|'mindset'|'settings'>('arena');
   const [mounted, setMounted] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -24,6 +26,10 @@ export default function App() {
   }, [settings.theme]);
 
   if (!mounted) return null;
+
+  if (!isUnlocked) {
+    return <LockScreen onUnlock={() => setIsUnlocked(true)} />;
+  }
 
   if (!settings.onboardingDone) {
     return (

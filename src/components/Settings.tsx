@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ChangeEvent } from 'react';
 import { useStore } from '../lib/store';
 import { format } from 'date-fns';
 import { callGemini } from '../lib/gemini';
+import { Vault } from '../lib/vault';
+import { Shield, ShieldCheck } from 'lucide-react';
 
 export function Settings() {
   const { settings, meta, updateSettings } = useStore();
@@ -10,6 +12,17 @@ export function Settings() {
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<'none' | 'success' | 'error'>('none');
   const [testMsg, setTestMsg] = useState('');
+  
+  // Security State
+  const [vaultEnabled, setVaultEnabled] = useState(false);
+  const [isSettingUpVault, setIsSettingUpVault] = useState(false);
+  const [vaultMain, setVaultMain] = useState('');
+  const [vaultRecovery, setVaultRecovery] = useState('');
+  const [vaultError, setVaultError] = useState('');
+
+  useEffect(() => {
+    Vault.isEnabled().then(setVaultEnabled);
+  }, []);
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const safeMeta = meta || {};
@@ -45,6 +58,38 @@ export function Settings() {
     updateSettings({ geminiKey: null });
     setApiKeyInput('');
     setTestResult('none');
+  };
+
+  const handleSetupVault = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (vaultMain.length < 4 || vaultRecovery.length < 4) {
+      setVaultError('Passwords must be at least 4 characters');
+      return;
+    }
+    if (vaultMain === vaultRecovery) {
+      setVaultError('Main and Recovery must be different');
+      return;
+    }
+    
+    await Vault.setup(vaultMain, vaultRecovery);
+    setVaultEnabled(true);
+    setIsSettingUpVault(false);
+    setVaultMain('');
+    setVaultRecovery('');
+    setVaultError('');
+  };
+
+  const handleDisableVault = async () => {
+    const confirmPass = prompt('Enter your main password to disable security:');
+    if (!confirmPass) return;
+    
+    const result = await Vault.verify(confirmPass);
+    if (result === 'main' || result === 'recovery') {
+      await Vault.disable();
+      setVaultEnabled(false);
+    } else {
+      alert('Incorrect password. Security remains active.');
+    }
   };
 
   const handleExport = () => {
@@ -134,6 +179,87 @@ export function Settings() {
                 </button>
              ))}
           </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-xl font-bold tracking-tighter uppercase mb-4 text-app-primary flex items-center gap-2">
+          <Shield className="w-5 h-5" /> Base Security
+        </h2>
+        <div className="bg-app-surface border border-app-border rounded-xl p-4 md:p-6 space-y-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-bold text-app-text-main flex items-center gap-2">
+                Launch Shield
+                {vaultEnabled && <ShieldCheck className="w-4 h-4 text-app-success" />}
+              </p>
+              <p className="text-xs text-app-text-muted mt-1">
+                Require a password to open AURON. Protected by a fallback recovery key.
+              </p>
+            </div>
+            {!vaultEnabled && !isSettingUpVault && (
+              <button 
+                onClick={() => setIsSettingUpVault(true)}
+                className="px-4 py-2 bg-app-primary text-white rounded font-bold hover:bg-[#6a58f0] transition-colors whitespace-nowrap text-xs"
+              >
+                Enable Shield
+              </button>
+            )}
+            {vaultEnabled && (
+              <button 
+                onClick={handleDisableVault}
+                className="px-4 py-2 bg-app-elevated border border-app-border text-app-danger rounded font-bold hover:bg-app-danger hover:text-white transition-colors whitespace-nowrap text-xs"
+              >
+                Disable
+              </button>
+            )}
+          </div>
+
+          {isSettingUpVault && !vaultEnabled && (
+            <form onSubmit={handleSetupVault} className="pt-4 border-t border-app-border space-y-3 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-app-text-muted uppercase mb-1">Primary Password</label>
+                  <input 
+                    type="password"
+                    value={vaultMain}
+                    onChange={e => setVaultMain(e.target.value)}
+                    placeholder="Enter main code"
+                    className="w-full bg-app-elevated border border-app-border rounded p-3 text-white focus:outline-none focus:border-app-primary font-mono tracking-widest placeholder:tracking-normal placeholder:font-sans"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-app-text-muted uppercase mb-1 flex justify-between">
+                    Recovery Password
+                    <span className="text-app-orange">Keep this safe</span>
+                  </label>
+                  <input 
+                    type="password"
+                    value={vaultRecovery}
+                    onChange={e => setVaultRecovery(e.target.value)}
+                    placeholder="Enter backup code"
+                    className="w-full bg-app-elevated border border-app-border rounded p-3 text-white focus:outline-none focus:border-app-primary font-mono tracking-widest placeholder:tracking-normal placeholder:font-sans"
+                  />
+                </div>
+              </div>
+              {vaultError && <p className="text-app-danger text-xs font-bold">{vaultError}</p>}
+              <div className="flex gap-2 justify-end pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => { setIsSettingUpVault(false); setVaultError(''); }}
+                  className="px-4 py-2 text-app-text-muted text-xs font-bold uppercase transition-colors hover:text-app-text-main"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="px-6 py-2 bg-app-primary text-white rounded font-bold hover:bg-[#6a58f0] transition-colors"
+                >
+                  Engage Security
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
 
