@@ -15,7 +15,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -24,17 +24,16 @@ jobs:
           java-version: '17'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build Web App
         run: npm run build
 
       - name: Setup Capacitor
         run: |
-          npm install @capacitor/core @capacitor/android
-          npm install -D @capacitor/cli
-          npx cap init AURON com.auron.app --web-dir dist
-          npx cap add android
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
           npx cap sync android
 
       - name: Build APK (Debug)
