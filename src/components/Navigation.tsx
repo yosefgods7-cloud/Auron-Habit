@@ -9,10 +9,11 @@ export function Navigation({ activeTab, setActiveTab, onAddClick }: { activeTab:
     { id: 'habits', icon: '⚡', label: 'Habits' },
     { id: 'intel', icon: '📊', label: 'Intel' },
     { id: 'mindset', icon: '🧠', label: 'Mindset' },
+    { id: 'settings', icon: '⚙️', label: 'Settings' }
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-20 bg-[#0d0d14] border-t border-[#2a2a3a] px-4 md:px-8 flex items-center justify-between z-50">
+    <nav className="fixed bottom-0 left-0 right-0 h-20 bg-[#0d0d14] border-t border-[#2a2a3a] px-2 md:px-8 flex items-center justify-between z-50">
       {navItems.slice(0, 2).map((item) => (
         <button 
           key={item.id}
@@ -27,7 +28,7 @@ export function Navigation({ activeTab, setActiveTab, onAddClick }: { activeTab:
         </button>
       ))}
 
-      <div className="relative -top-6">
+      <div className="relative -top-6 mx-2">
          <button 
            className="w-14 h-14 bg-[#7c6aff] rounded-xl shadow-[0_0_20px_rgba(124,106,255,0.4)] flex items-center justify-center text-white text-3xl font-light border-2 border-[#0d0d14] active:scale-95 transition-transform"
            onClick={onAddClick}

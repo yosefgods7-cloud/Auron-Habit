@@ -91,7 +91,9 @@ export async function callGemini(prompt: string, maxTokens = 300, featureKey: st
   }
 
   // Check quota
-  const usage = state.meta.geminiUsage[today] || { requests: 0 };
+  const safeMeta = state.meta || {};
+  const safeUsage = safeMeta.geminiUsage || {};
+  const usage = safeUsage[today] || { requests: 0 };
   if (usage.requests >= 30) throw new Error('QUOTA_EXCEEDED');
 
   await waitForQueue();

@@ -11,7 +11,9 @@ export function Settings() {
   const [testMsg, setTestMsg] = useState('');
 
   const today = format(new Date(), 'yyyy-MM-dd');
-  const usageToday = meta.geminiUsage[today] || { requests: 0, tokensIn: 0, tokensOut: 0 };
+  const safeMeta = meta || {};
+  const safeUsage = safeMeta.geminiUsage || {};
+  const usageToday = safeUsage[today] || { requests: 0, tokensIn: 0, tokensOut: 0 };
   const reqPct = Math.min(100, Math.round((usageToday.requests / 15) * 100));
   const tokenPct = Math.min(100, Math.round((usageToday.tokensOut / 50000) * 100));
 

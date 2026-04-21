@@ -153,9 +153,13 @@ export const useStore = create<AppState>()(
         return { logs: newLogs };
       }),
 
-      updateDaily: (date, updates) => set((state) => ({
-        daily: { ...state.daily, [date]: { ...state.daily[date], ...updates } }
-      })),
+      updateDaily: (date, updates) => set((state) => {
+        const safeDaily = state.daily || {};
+        const safeDateData = safeDaily[date] || {};
+        return {
+          daily: { ...safeDaily, [date]: { ...safeDateData, ...updates } }
+        };
+      }),
 
       addGrowthLog: (log) => set((state) => ({
         growth: [{ ...log, id: generateId(), date: new Date().toISOString() }, ...state.growth]

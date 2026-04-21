@@ -7,7 +7,7 @@ import { callGemini } from '../lib/gemini';
 export function Arena() {
   const habits = useStore(state => state.habits);
   const logs = useStore(state => state.logs);
-  const daily = useStore(state => state.daily);
+  const daily = useStore(state => state.daily) || {};
   const meta = useStore(state => state.meta);
   const toggleLog = useStore(state => state.toggleLog);
   const settings = useStore(state => state.settings);

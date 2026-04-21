@@ -6,7 +6,8 @@ import { callGemini } from '../lib/gemini';
 export function Mindset() {
   const { daily, settings, updateDaily } = useStore();
   const today = format(new Date(), 'yyyy-MM-dd');
-  const todayData = daily[today] || {};
+  const safeDaily = daily || {};
+  const todayData = safeDaily[today] || {};
 
   const [reflectionText, setReflectionText] = useState(todayData.intention || '');
   const [aiStoicInsight, setAiStoicInsight] = useState<string | null>(todayData.stoicResponse || null);
