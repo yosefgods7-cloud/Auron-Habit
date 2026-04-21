@@ -13,14 +13,14 @@ export function Navigation({ activeTab, setActiveTab, onAddClick }: { activeTab:
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-20 bg-[#0d0d14] border-t border-[#2a2a3a] px-2 md:px-8 flex items-center justify-between z-50">
+    <nav className="fixed bottom-0 left-0 right-0 h-20 bg-app-bg border-t border-app-border px-2 md:px-8 flex items-center justify-between z-50">
       {navItems.slice(0, 2).map((item) => (
         <button 
           key={item.id}
           onClick={() => setActiveTab(item.id)}
           className={cn(
             "flex flex-col items-center gap-1 transition-colors",
-            activeTab === item.id ? "text-[#7c6aff]" : "text-[#7a7a9a]"
+            activeTab === item.id ? "text-app-primary" : "text-app-text-muted"
           )}
         >
           <div className="w-6 h-6 flex items-center justify-center text-xl">{item.icon}</div>
@@ -30,7 +30,7 @@ export function Navigation({ activeTab, setActiveTab, onAddClick }: { activeTab:
 
       <div className="relative -top-6 mx-2">
          <button 
-           className="w-14 h-14 bg-[#7c6aff] rounded-xl shadow-[0_0_20px_rgba(124,106,255,0.4)] flex items-center justify-center text-white text-3xl font-light border-2 border-[#0d0d14] active:scale-95 transition-transform"
+           className="w-14 h-14 bg-app-primary rounded-xl shadow-[0_0_20px_rgba(124,106,255,0.4)] flex items-center justify-center text-white text-3xl font-light border-2 border-[#0d0d14] active:scale-95 transition-transform"
            onClick={onAddClick}
          >
            +
@@ -43,7 +43,7 @@ export function Navigation({ activeTab, setActiveTab, onAddClick }: { activeTab:
           onClick={() => setActiveTab(item.id)}
           className={cn(
             "flex flex-col items-center gap-1 transition-colors",
-            activeTab === item.id ? "text-[#7c6aff]" : "text-[#7a7a9a]"
+            activeTab === item.id ? "text-app-primary" : "text-app-text-muted"
           )}
         >
           <div className="w-6 h-6 flex items-center justify-center text-xl">{item.icon}</div>

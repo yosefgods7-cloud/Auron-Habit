@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { callGemini } from '../lib/gemini';
 
 export function Mindset() {
-  const { daily, settings, updateDaily } = useStore();
+  const { daily, settings, updateDaily, growth, addGrowthLog, meta } = useStore();
   const today = format(new Date(), 'yyyy-MM-dd');
   const safeDaily = daily || {};
   const todayData = safeDaily[today] || {};
@@ -18,6 +18,15 @@ export function Mindset() {
   // For mindset pattern analyzer
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
+
+  const [gapReport, setGapReport] = useState<string | null>(null);
+  const [isGapLoading, setIsGapLoading] = useState(false);
+
+  const [isLetterLoading, setIsLetterLoading] = useState(false);
+
+  const currentWeek = format(new Date(), 'w');
+  const cacheKey = `hardq_${currentWeek}`;
+  const hardQuestion = useStore.getState().aiCache['ai_' + cacheKey]?.text;
 
   const STOIC_PROMPT = "What obstacle stands in my way today, and how can I turn it into the way forward?";
 
@@ -63,15 +72,61 @@ Max 20 words per bullet. Be precise and direct.`,
     }
   };
 
+  const handleGapReport = async () => {
+    setIsGapLoading(true);
+    try {
+       const text = await callGemini(`IDENTITY GAP REPORT
+Identity Statement: "${settings.identityStatement}"
+Level: ${meta.level}
+Current Streak: ${meta.currentStreak}
+
+Analyze if their actual progress matches their stated identity.
+Provide:
+1. EARNED IDENTITY: Based ONLY on their recent actions, what is their actual identity? (1 short sentence)
+2. THE GAP: Where does their behavior fall short of their stated identity? (2 sentences, brutal honesty)
+3. THE BRIDGE: One 30-day challenge to close the gap. (1 sentence)
+
+Format clearly. Max 100 words.`, 250, `gap_${format(new Date(), 'yyyy-MM')}`, true);
+       setGapReport(text);
+    } catch(e) {
+      console.error(e);
+    } finally {
+      setIsGapLoading(false);
+    }
+  };
+
+  const handleAccountabilityLetter = async () => {
+    setIsLetterLoading(true);
+    try {
+      const text = await callGemini(`Write 2 short letters from the user's Future Self (6 months from now).
+
+Letter 1: THE BUILT PATH (If they maintain their current good habits)
+Letter 2: THE DRIFTED PATH (If they succumb to their current weaknesses/skips)
+
+Write from the first-person perspective ("I am you..."). Make them visceral and vivid. Max 80 words per letter. Separate them with '---'.`, 350, null, true);
+      
+      addGrowthLog({
+         type: 'win', // Or add a specific 'letter' type if supported by GrowthLog rendering
+         text: `THE ACCOUNTABILITY LETTER\n\n${text}`
+      });
+      alert('Accountability Letter added to your Growth Logs.');
+    } catch (e) {
+      console.error(e);
+      alert('Failed to generate letter.');
+    } finally {
+      setIsLetterLoading(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 pb-32 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold tracking-tighter uppercase text-[#7c6aff]">Mindset Module</h2>
+        <h2 className="text-xl font-bold tracking-tighter uppercase text-app-primary">Mindset Module</h2>
       </div>
 
-      <section className="bg-[#13131a] border border-[#2a2a3a] rounded-xl p-4 md:p-6 space-y-4">
+      <section className="bg-app-surface border border-app-border rounded-xl p-4 md:p-6 space-y-4">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-sm font-bold uppercase tracking-widest text-[#7a7a9a]">Daily Stoic Challenge</span>
+          <span className="text-sm font-bold uppercase tracking-widest text-app-text-muted">Daily Stoic Challenge</span>
         </div>
         <h3 className="text-lg md:text-xl font-bold italic">"{STOIC_PROMPT}"</h3>
         
@@ -79,13 +134,13 @@ Max 20 words per bullet. Be precise and direct.`,
           value={reflectionText}
           onChange={(e) => setReflectionText(e.target.value)}
           placeholder="Reflect here..."
-          className="w-full bg-[#1c1c27] border border-[#2a2a3a] rounded p-3 text-white focus:outline-none focus:border-[#7c6aff] min-h-[100px] resize-none"
+          className="w-full bg-app-elevated border border-app-border rounded p-3 text-white focus:outline-none focus:border-app-primary min-h-[100px] resize-none"
         />
         
         <div className="flex justify-between items-center gap-4">
            <button 
              onClick={handleSaveReflection}
-             className="px-6 py-2 bg-[#2a2a3a] text-white font-bold rounded hover:bg-[#3a3a4a] transition-colors"
+             className="px-6 py-2 bg-app-border text-white font-bold rounded hover:bg-app-border transition-colors"
            >
              Save Entry
            </button>
@@ -94,7 +149,7 @@ Max 20 words per bullet. Be precise and direct.`,
              <button 
                onClick={handleGetInsight}
                disabled={isInsightLoading}
-               className="text-xs font-bold uppercase tracking-widest text-[#7c6aff] border border-[#7c6aff] border-opacity-50 px-3 py-2 rounded hover:bg-[#7c6aff] hover:bg-opacity-10 transition-colors flex items-center gap-2 disabled:opacity-50"
+               className="text-xs font-bold uppercase tracking-widest text-app-primary border border-app-primary border-opacity-50 px-3 py-2 rounded hover:bg-app-primary hover:bg-opacity-10 transition-colors flex items-center gap-2 disabled:opacity-50"
              >
                <span>✦</span> {isInsightLoading ? 'Philosophizing...' : 'Get AI Insight'}
              </button>
@@ -102,26 +157,26 @@ Max 20 words per bullet. Be precise and direct.`,
         </div>
 
         {aiStoicInsight && (
-          <div className="mt-4 pt-4 border-t border-[#2a2a3a] animate-fade-in">
+          <div className="mt-4 pt-4 border-t border-app-border animate-fade-in">
              <div className="flex items-center mb-2 gap-2">
-               <span className="text-[10px] font-bold text-[#7c6aff] uppercase tracking-wider">✦ Gemini Responds</span>
+               <span className="text-[10px] font-bold text-app-primary uppercase tracking-wider">✦ Gemini Responds</span>
              </div>
-             <p className="text-sm text-[#e8e8f0] leading-relaxed relative border-l-2 border-[#7c6aff] pl-3">
+             <p className="text-sm text-app-text-main leading-relaxed relative border-l-2 border-app-primary pl-3">
                {aiStoicInsight}
              </p>
           </div>
         )}
       </section>
 
-      <section className="bg-[#13131a] border border-[#2a2a3a] rounded-xl p-4 md:p-6">
+      <section className="bg-app-surface border border-app-border rounded-xl p-4 md:p-6">
          <div className="flex flex-col space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-[#7a7a9a]">Mindset Check-In</h3>
+              <h3 className="text-sm font-bold uppercase tracking-widest text-app-text-muted">Mindset Check-In</h3>
                {settings.geminiKey && !isCheckInMode && (
                  <button 
                    onClick={handleAnalyzePattern}
                    disabled={isAnalysisLoading}
-                   className="text-[10px] font-bold uppercase tracking-widest text-[#00d4ff] border border-[#00d4ff] border-opacity-50 px-2 py-1 rounded hover:bg-[#00d4ff] hover:bg-opacity-10 transition-colors flex items-center gap-1 disabled:opacity-50"
+                   className="text-[10px] font-bold uppercase tracking-widest text-app-info border border-app-info border-opacity-50 px-2 py-1 rounded hover:bg-app-info hover:bg-opacity-10 transition-colors flex items-center gap-1 disabled:opacity-50"
                  >
                    <span>✦</span> Analyze My Pattern
                  </button>
@@ -139,7 +194,7 @@ Max 20 words per bullet. Be precise and direct.`,
                           updateDaily(today, { mood: v });
                           setIsCheckInMode(false);
                         }}
-                        className="flex-1 py-3 bg-[#1c1c27] border border-[#2a2a3a] rounded font-bold hover:border-[#7c6aff]"
+                        className="flex-1 py-3 bg-app-elevated border border-app-border rounded font-bold hover:border-app-primary"
                       >
                         {v}
                       </button>
@@ -148,20 +203,20 @@ Max 20 words per bullet. Be precise and direct.`,
                </div>
             ) : (
                <div>
-                  <div className="flex items-center justify-between mb-4 bg-[#1c1c27] p-4 rounded">
-                     <span className="text-xs uppercase text-[#7a7a9a] font-bold">Today's Energy Score</span>
-                     <span className="text-xl font-bold text-[#22d37a]">{todayData.mood}/5</span>
+                  <div className="flex items-center justify-between mb-4 bg-app-elevated p-4 rounded">
+                     <span className="text-xs uppercase text-app-text-muted font-bold">Today's Energy Score</span>
+                     <span className="text-xl font-bold text-app-success">{todayData.mood}/5</span>
                   </div>
                   
                   {isAnalysisLoading && (
-                    <p className="text-xs text-[#7a7a9a] animate-pulse">✦ Analyzing pattern...</p>
+                    <p className="text-xs text-app-text-muted animate-pulse">✦ Analyzing pattern...</p>
                   )}
                   {aiAnalysis && (
-                    <div className="mt-4 border-t border-[#2a2a3a] pt-4 animate-fade-in">
-                       <h4 className="text-[10px] font-bold uppercase text-[#00d4ff] mb-2 flex items-center gap-1">
+                    <div className="mt-4 border-t border-app-border pt-4 animate-fade-in">
+                       <h4 className="text-[10px] font-bold uppercase text-app-info mb-2 flex items-center gap-1">
                           <span>✦</span> AI Pattern Analysis
                        </h4>
-                       <div className="text-sm text-[#e8e8f0] leading-relaxed whitespace-pre-wrap pl-2 border-l border-[#00d4ff] border-opacity-30">
+                       <div className="text-sm text-app-text-main leading-relaxed whitespace-pre-wrap pl-2 border-l border-app-info border-opacity-30">
                          {aiAnalysis}
                        </div>
                     </div>
@@ -170,6 +225,56 @@ Max 20 words per bullet. Be precise and direct.`,
             )}
          </div>
       </section>
+
+      {settings.geminiKey && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <section className="bg-app-surface border border-app-border rounded-xl p-4 md:p-6">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-app-success mb-4 flex justify-between items-center">
+              Identity Gap Report
+            </h3>
+            
+            {!gapReport ? (
+              <div className="text-center py-4">
+                <p className="text-xs text-app-text-muted mb-4">Compare your stated identity against your actual habits.</p>
+                <button 
+                  onClick={handleGapReport} disabled={isGapLoading}
+                  className="px-4 py-2 bg-app-elevated text-white border border-app-border text-xs font-bold uppercase rounded hover:border-app-success"
+                >
+                  {isGapLoading ? "Running Report..." : "Run Monthly Report"}
+                </button>
+              </div>
+            ) : (
+              <div className="text-sm whitespace-pre-wrap leading-relaxed text-app-text-main bg-app-elevated p-4 rounded border-l-2 border-app-success">
+                {gapReport}
+              </div>
+            )}
+          </section>
+
+          <section className="bg-app-surface border border-app-border rounded-xl p-4 md:p-6 flex flex-col justify-between">
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-widest text-app-danger mb-2 flex justify-between items-center">
+                 The Accountability Letter
+              </h3>
+              <p className="text-sm text-app-text-muted mb-4 leading-relaxed">
+                 Generate two vivid letters from your future self. Saves to Growth Logs.
+              </p>
+            </div>
+            <button 
+              onClick={handleAccountabilityLetter} disabled={isLetterLoading}
+              className="w-full py-3 bg-app-danger/10 text-app-danger border border-app-danger/30 text-xs font-bold uppercase rounded hover:bg-app-danger/20 transition-colors mt-auto"
+            >
+              {isLetterLoading ? "Writing Letters..." : "Generate Future Letters"}
+            </button>
+          </section>
+        </div>
+      )}
+
+      {hardQuestion && (
+        <section className="bg-app-orange/10 border border-app-orange/30 rounded-xl p-4 md:p-6 mb-8">
+           <h3 className="text-[10px] font-bold uppercase tracking-widest text-app-orange mb-2">This Week's Hard Question</h3>
+           <p className="text-sm md:text-base font-serif italic text-app-text-main leading-relaxed">{hardQuestion}</p>
+        </section>
+      )}
     </div>
   )
 }

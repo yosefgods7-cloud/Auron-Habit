@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { useStore, HabitCategory, Timeslot } from '../lib/store';
 import { cn } from '../lib/utils';
 import { callGemini } from '../lib/gemini';
@@ -26,7 +27,7 @@ export function AddHabitModal({ onClose }: AddHabitModalProps) {
 
   const icons = ['💪', '🧠', '🏃', '💧', '🌅', '✍️', '🍎', '😴', '🙏', '💻'];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
@@ -37,7 +38,7 @@ export function AddHabitModal({ onClose }: AddHabitModalProps) {
       protocol: protocol.trim() || 'General',
       frequency: { type: 'daily' },
       timeslot,
-      color: '#7c6aff',
+      color: 'var(--color-app-primary)',
       difficulty,
       why: '',
       description: description.trim(),
@@ -99,29 +100,29 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
 
   return (
     <div className="fixed inset-0 z-[100] bg-black bg-opacity-80 flex items-center justify-center p-4">
-      <div className="bg-[#0d0d14] border border-[#2a2a3a] rounded-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6 border-b border-[#2a2a3a] pb-4">
+      <div className="bg-app-bg border border-app-border rounded-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6 border-b border-app-border pb-4">
           <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold uppercase text-[#7c6aff]">New Habit</h2>
+            <h2 className="text-xl font-bold uppercase text-app-primary">New Habit</h2>
             {settings.geminiKey && (
               <button 
                 type="button"
                 onClick={handleSuggest}
                 disabled={isSuggesting}
-                className="text-[10px] font-bold uppercase tracking-widest text-[#7c6aff] border border-[#7c6aff] border-opacity-50 px-2 py-1 rounded hover:bg-[#7c6aff] hover:bg-opacity-10 transition-colors flex items-center gap-1 disabled:opacity-50"
+                className="text-[10px] font-bold uppercase tracking-widest text-app-primary border border-app-primary border-opacity-50 px-2 py-1 rounded hover:bg-app-primary hover:bg-opacity-10 transition-colors flex items-center gap-1 disabled:opacity-50"
               >
                 <span>✦</span> {isSuggesting ? 'Thinking...' : 'Suggest'}
               </button>
             )}
           </div>
-          <button onClick={onClose} className="text-[#7a7a9a] hover:text-white">✕</button>
+          <button onClick={onClose} className="text-app-text-muted hover:text-white">✕</button>
         </div>
 
         {aiSuggestions.length > 0 && (
           <div className="mb-6 space-y-2">
             <div className="flex items-center justify-between mb-2">
-               <span className="text-xs font-bold text-[#7a7a9a] uppercase">✦ AI Suggestions</span>
-               <button onClick={() => setAiSuggestions([])} className="text-xs text-[#7c6aff]">Clear</button>
+               <span className="text-xs font-bold text-app-text-muted uppercase">✦ AI Suggestions</span>
+               <button onClick={() => setAiSuggestions([])} className="text-xs text-app-primary">Clear</button>
             </div>
             <div className="grid grid-cols-1 gap-2">
               {aiSuggestions.map((s, idx) => (
@@ -129,14 +130,14 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
                   type="button"
                   key={idx}
                   onClick={() => handleUseSuggestion(s)}
-                  className="flex items-center gap-3 p-3 bg-[#1c1c27] border border-[#7c6aff] border-opacity-30 rounded-lg hover:bg-[#2a2a3a] text-left transition-colors"
+                  className="flex items-center gap-3 p-3 bg-app-elevated border border-app-primary border-opacity-30 rounded-lg hover:bg-app-border text-left transition-colors"
                 >
                   <span className="text-2xl">{s.icon}</span>
                   <div className="flex-1">
-                    <p className="font-bold text-sm text-[#e8e8f0]">{s.name}</p>
-                    <p className="text-[10px] text-[#7a7a9a] uppercase">{s.category} • {s.difficulty * 10} XP</p>
+                    <p className="font-bold text-sm text-app-text-main">{s.name}</p>
+                    <p className="text-[10px] text-app-text-muted uppercase">{s.category} • {s.difficulty * 10} XP</p>
                   </div>
-                  <span className="text-[#7c6aff] text-xs font-bold">USE →</span>
+                  <span className="text-app-primary text-xs font-bold">USE →</span>
                 </button>
               ))}
             </div>
@@ -145,19 +146,19 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-[#7a7a9a] uppercase mb-1">Habit Name</label>
+            <label className="block text-xs font-bold text-app-text-muted uppercase mb-1">Habit Name</label>
             <input 
               type="text" 
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-[#1c1c27] border border-[#2a2a3a] rounded p-3 text-white focus:outline-none focus:border-[#7c6aff]"
+              className="w-full bg-app-elevated border border-app-border rounded p-3 text-white focus:outline-none focus:border-app-primary"
               placeholder="e.g. Read 10 Pages"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#7a7a9a] uppercase mb-1">Icon</label>
+            <label className="block text-xs font-bold text-app-text-muted uppercase mb-1">Icon</label>
             <div className="flex flex-wrap gap-2">
               {icons.map(i => (
                 <button
@@ -166,7 +167,7 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
                   onClick={() => setIcon(i)}
                   className={cn(
                     "w-10 h-10 rounded text-xl border transition-colors flex items-center justify-center",
-                    icon === i ? "bg-[#7c6aff] border-[#7c6aff]" : "bg-[#1c1c27] border-[#2a2a3a]"
+                    icon === i ? "bg-app-primary border-app-primary" : "bg-app-elevated border-app-border"
                   )}
                 >
                   {i}
@@ -176,7 +177,7 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#7a7a9a] uppercase mb-1">Timeslot</label>
+            <label className="block text-xs font-bold text-app-text-muted uppercase mb-1">Timeslot</label>
             <div className="grid grid-cols-2 gap-2">
               {(['morning', 'afternoon', 'evening', 'anytime'] as Timeslot[]).map(slot => (
                 <button
@@ -185,7 +186,7 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
                   onClick={() => setTimeslot(slot)}
                   className={cn(
                     "py-2 rounded text-sm font-bold uppercase border transition-colors",
-                    timeslot === slot ? "bg-[#7c6aff] border-[#7c6aff] text-white" : "bg-[#1c1c27] border-[#2a2a3a] text-[#7a7a9a]"
+                    timeslot === slot ? "bg-app-primary border-app-primary text-white" : "bg-app-elevated border-app-border text-app-text-muted"
                   )}
                 >
                   {slot}
@@ -195,50 +196,50 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#7a7a9a] uppercase mb-1">Protocol Group</label>
+            <label className="block text-xs font-bold text-app-text-muted uppercase mb-1">Protocol Group</label>
             <input 
               type="text" 
               value={protocol}
               onChange={(e) => setProtocol(e.target.value)}
-              className="w-full bg-[#1c1c27] border border-[#2a2a3a] rounded p-3 text-white focus:outline-none focus:border-[#7c6aff]"
+              className="w-full bg-app-elevated border border-app-border rounded p-3 text-white focus:outline-none focus:border-app-primary"
               placeholder="e.g. Morning Routine, Work, Health"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#7a7a9a] uppercase mb-1">Description / Task Notes</label>
+            <label className="block text-xs font-bold text-app-text-muted uppercase mb-1">Description / Task Notes</label>
             <textarea 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-[#1c1c27] border border-[#2a2a3a] rounded p-3 text-white focus:outline-none focus:border-[#7c6aff] resize-none h-20"
+              className="w-full bg-app-elevated border border-app-border rounded p-3 text-white focus:outline-none focus:border-app-primary resize-none h-20"
               placeholder="Provide more specific instructions or why you are doing this..."
             />
           </div>
 
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
-              <label className="block text-xs font-bold text-[#7a7a9a] uppercase mb-1">Reminder Time (Optional)</label>
+              <label className="block text-xs font-bold text-app-text-muted uppercase mb-1">Reminder Time (Optional)</label>
               <input 
                 type="time" 
                 value={reminderTime}
                 onChange={(e) => setReminderTime(e.target.value)}
-                className="w-full bg-[#1c1c27] border border-[#2a2a3a] rounded p-3 text-white focus:outline-none focus:border-[#7c6aff]"
+                className="w-full bg-app-elevated border border-app-border rounded p-3 text-white focus:outline-none focus:border-app-primary"
               />
             </div>
             
             <div className="flex flex-col items-center">
-               <label className="block text-xs font-bold text-[#7a7a9a] uppercase mb-2">Enable Alarm</label>
+               <label className="block text-xs font-bold text-app-text-muted uppercase mb-2">Enable Alarm</label>
                <input 
                  type="checkbox"
                  checked={alarmEnabled}
                  onChange={(e) => setAlarmEnabled(e.target.checked)}
-                 className="w-6 h-6 rounded border-[#2a2a3a] bg-[#1c1c27] text-[#7c6aff] focus:ring-[#7c6aff]"
+                 className="w-6 h-6 rounded border-app-border bg-app-elevated text-app-primary focus:ring-[var(--color-app-primary)]"
                />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#7a7a9a] uppercase mb-1">Difficulty (XP: {difficulty * 10})</label>
+            <label className="block text-xs font-bold text-app-text-muted uppercase mb-1">Difficulty (XP: {difficulty * 10})</label>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map(level => (
                 <button
@@ -247,7 +248,7 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
                   onClick={() => setDifficulty(level)}
                   className={cn(
                     "w-10 h-10 rounded font-bold border transition-colors",
-                    difficulty >= level ? "bg-[#00d4ff] text-[#0d0d14] border-[#00d4ff]" : "bg-[#1c1c27] border-[#2a2a3a] text-[#7a7a9a]"
+                    difficulty >= level ? "bg-app-info text-[#0d0d14] border-app-info" : "bg-app-elevated border-app-border text-app-text-muted"
                   )}
                 >
                   {level}
@@ -259,7 +260,7 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
           <div className="pt-4">
             <button 
               type="submit"
-              className="w-full py-3 bg-[#7c6aff] text-white font-bold rounded-lg shadow-[0_4px_16px_rgba(124,106,255,0.4)]"
+              className="w-full py-3 bg-app-primary text-white font-bold rounded-lg shadow-[0_4px_16px_rgba(124,106,255,0.4)]"
             >
               Add to Protocol
             </button>

@@ -19,13 +19,17 @@ export default function App() {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', settings.theme);
+  }, [settings.theme]);
+
   if (!mounted) return null;
 
   if (!settings.onboardingDone) {
     return (
-      <div className="w-full h-full bg-[#0a0a0f] text-[#e8e8f0] font-sans flex flex-col items-center justify-center p-6 text-center select-none overflow-hidden">
-        <h1 className="text-4xl font-bold tracking-tighter uppercase text-[#7c6aff] mb-4">AURON</h1>
-        <p className="text-[#7a7a9a] mb-8">Forge Who You Become.</p>
+      <div className="w-full h-full bg-app-bg text-app-text-main font-sans flex flex-col items-center justify-center p-6 text-center select-none overflow-hidden">
+        <h1 className="text-4xl font-bold tracking-tighter uppercase text-app-primary mb-4">AURON</h1>
+        <p className="text-app-text-muted mb-8">Forge Who You Become.</p>
         <button 
           onClick={() => useStore.getState().completeOnboarding('Warrior', '🦁', [
             {
@@ -35,7 +39,7 @@ export default function App() {
               protocol: 'Morning Warrior',
               frequency: { type: 'daily' },
               timeslot: 'morning',
-              color: '#22d37a',
+              color: 'var(--color-app-success)',
               difficulty: 4,
               why: 'Discipline',
               reminderTime: null,
@@ -48,14 +52,14 @@ export default function App() {
               protocol: 'Work',
               frequency: { type: 'daily' },
               timeslot: 'afternoon',
-              color: '#00d4ff',
+              color: 'var(--color-app-info)',
               difficulty: 5,
               why: 'Focus',
               reminderTime: null,
               graceDay: false
             }
           ])}
-          className="px-8 py-3 bg-[#7c6aff] text-white font-bold rounded-lg shadow-[0_4px_16px_rgba(124,106,255,0.4)]"
+          className="px-8 py-3 bg-app-primary text-white font-bold rounded-lg shadow-[0_4px_16px_rgba(124,106,255,0.4)]"
         >
           Begin Training
         </button>
@@ -64,12 +68,12 @@ export default function App() {
   }
 
   return (
-    <div className="w-full h-full bg-[#0a0a0f] text-[#e8e8f0] font-sans flex flex-col overflow-hidden select-none">
+    <div className="w-full h-full bg-app-bg text-app-text-main font-sans flex flex-col overflow-hidden select-none">
       <AlarmManager />
-      <header className="h-16 px-4 md:px-6 flex items-center justify-between border-b border-[#2a2a3a] bg-[#0d0d14] sticky top-0 z-50 shrink-0">
+      <header className="h-16 px-4 md:px-6 flex items-center justify-between border-b border-app-border bg-app-bg sticky top-0 z-50 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8">
-            <svg viewBox="0 0 100 100" className="w-full h-full fill-current text-[#7c6aff]">
+            <svg viewBox="0 0 100 100" className="w-full h-full fill-current text-app-primary">
               <path d="M50 5 L90 25 L90 75 L50 95 L10 75 L10 25 Z" fill="none" stroke="currentColor" strokeWidth="6" />
               <path d="M50 25 Q60 45 50 75 Q40 45 50 25" fill="currentColor" />
             </svg>
@@ -78,22 +82,22 @@ export default function App() {
         </div>
         <div className="flex items-center gap-2 md:gap-4">
           <div className="hidden md:block text-right">
-            <p className="text-[10px] text-[#7a7a9a] uppercase font-bold tracking-widest">Forge Score</p>
+            <p className="text-[10px] text-app-text-muted uppercase font-bold tracking-widest">Forge Score</p>
             <div className="flex items-center gap-2">
-              <span className="text-lg font-mono text-[#22d37a]">84</span>
-              <div className="w-12 h-1 bg-[#1c1c27] rounded-full overflow-hidden">
-                <div className="h-full bg-[#22d37a]" style={{ width: '84%' }}></div>
+              <span className="text-lg font-mono text-app-success">84</span>
+              <div className="w-12 h-1 bg-app-elevated rounded-full overflow-hidden">
+                <div className="h-full bg-app-success" style={{ width: '84%' }}></div>
               </div>
             </div>
           </div>
-          <div className="px-2 md:px-3 py-1 bg-[#1c1c27] border border-[#2a2a3a] rounded flex items-center gap-1 md:gap-2">
-            {settings.geminiKey && <span className="text-[#7c6aff] mr-1" title="AURON Intelligence Active">✦</span>}
-            <span className="text-[10px] font-bold text-[#00d4ff] uppercase">Lvl {useStore.getState().meta.level}</span>
-            <span className="text-xs font-bold text-[#e8e8f0] truncate max-w-[60px] md:max-w-[80px]">{settings.userName}</span>
+          <div className="px-2 md:px-3 py-1 bg-app-elevated border border-app-border rounded flex items-center gap-1 md:gap-2">
+            {settings.geminiKey && <span className="text-app-primary mr-1" title="AURON Intelligence Active">✦</span>}
+            <span className="text-[10px] font-bold text-app-info uppercase">Lvl {useStore.getState().meta.level}</span>
+            <span className="text-xs font-bold text-app-text-main truncate max-w-[60px] md:max-w-[80px]">{settings.userName}</span>
           </div>
           <button 
             onClick={() => setActiveTab('settings')}
-            className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#7c6aff] flex items-center justify-center text-lg md:text-xl shrink-0 transition-transform active:scale-95"
+            className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-app-primary flex items-center justify-center text-lg md:text-xl shrink-0 transition-transform active:scale-95"
             title="Settings"
           >
             {settings.avatarEmoji}

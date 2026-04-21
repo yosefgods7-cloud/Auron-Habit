@@ -55,16 +55,16 @@ export function AlarmManager() {
   if (!activeAlarm) return null;
 
   return (
-    <div className="fixed top-4 left-4 right-4 z-[200] bg-[#1c1c27] border border-[#7c6aff] border-opacity-50 p-4 rounded-xl shadow-[0_4px_30px_rgba(124,106,255,0.3)] flex justify-between items-center animate-slide-down">
+    <div className="fixed top-4 left-4 right-4 z-[200] bg-app-elevated border border-app-primary border-opacity-50 p-4 rounded-xl shadow-[0_4px_30px_rgba(124,106,255,0.3)] flex justify-between items-center animate-slide-down">
       <div>
-        <h3 className="font-bold text-[#e8e8f0] flex items-center gap-2">
-          <span className="text-[#00d4ff] animate-pulse">⏰</span> {activeAlarm}
+        <h3 className="font-bold text-app-text-main flex items-center gap-2">
+          <span className="text-app-info animate-pulse">⏰</span> {activeAlarm}
         </h3>
-        <p className="text-xs text-[#7a7a9a] uppercase tracking-wider mt-1">Scheduled task triggered</p>
+        <p className="text-xs text-app-text-muted uppercase tracking-wider mt-1">Scheduled task triggered</p>
       </div>
       <button 
         onClick={() => setActiveAlarm(null)}
-        className="px-4 py-2 bg-[#7c6aff] text-white text-xs font-bold rounded"
+        className="px-4 py-2 bg-app-primary text-white text-xs font-bold rounded"
       >
         Dismiss
       </button>

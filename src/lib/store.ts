@@ -33,6 +33,7 @@ export interface DayLog {
   note: string;
   completedAt: string | null;
   xpEarned: number;
+  skipReason?: string;
 }
 
 export interface DailyReflection {
@@ -49,6 +50,9 @@ export interface DailyData {
   xpEarned?: number;
   stoicResponse?: string;
   forgeBrief?: string;
+  survivalMode?: boolean;
+  survivalHabits?: string[];
+  gamePlan?: any;
 }
 
 export interface GrowthLog {
@@ -88,10 +92,11 @@ interface AppState {
   updateHabit: (id: string, updates: Partial<Habit>) => void;
   archiveHabit: (id: string) => void;
   toggleLog: (habitId: string, date: string, xpEarned: number) => void;
+  skipHabit: (habitId: string, date: string, reason: string) => void;
   updateDaily: (date: string, updates: Partial<DailyData>) => void;
   addGrowthLog: (log: Omit<GrowthLog, 'id' | 'date'>) => void;
   updateSettings: (settings: Partial<AppState['settings']>) => void;
-  completeOnboarding: (userName: string, avatarEmoji: string, defaultHabits: Habit[]) => void;
+  completeOnboarding: (userName: string, avatarEmoji: string, defaultHabits: Omit<Habit, 'id' | 'createdAt' | 'archived' | 'order'>[]) => void;
   earnXp: (amount: number) => void;
   setAiCache: (key: string, data: { text: string; timestamp: number }) => void;
   trackAiUsage: (date: string, tokensIn: number, tokensOut: number) => void;
@@ -143,13 +148,27 @@ export const useStore = create<AppState>()(
         let newLogs;
         if (existingInfo) {
           newLogs = state.logs.map(l => l.habitId === habitId && l.date === date ? 
-            { ...l, completed: !isCompleted, partial: !isCompleted ? 1 : 0, xpEarned: !isCompleted ? xpEarned : 0 } : l);
+            { ...l, completed: !isCompleted, partial: !isCompleted ? 1 : 0, xpEarned: !isCompleted ? xpEarned : 0, skipReason: !isCompleted ? undefined : l.skipReason } : l);
         } else {
           newLogs = [...state.logs, {
             habitId, date, completed: true, partial: 1, note: '', completedAt: new Date().toISOString(), xpEarned
           }];
         }
         
+        return { logs: newLogs };
+      }),
+
+      skipHabit: (habitId, date, reason) => set((state) => {
+        const existingInfo = state.logs.find(l => l.habitId === habitId && l.date === date);
+        let newLogs;
+        if (existingInfo) {
+          newLogs = state.logs.map(l => l.habitId === habitId && l.date === date ? 
+            { ...l, completed: false, partial: 0, xpEarned: 0, skipReason: reason } : l);
+        } else {
+          newLogs = [...state.logs, {
+            habitId, date, completed: false, partial: 0, note: '', completedAt: null, xpEarned: 0, skipReason: reason
+          }];
+        }
         return { logs: newLogs };
       }),
 
