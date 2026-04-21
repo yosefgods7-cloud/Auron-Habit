@@ -44,6 +44,34 @@ export function Settings() {
     setTestResult('none');
   };
 
+  const handleExport = () => {
+    const data = localStorage.getItem('auron-storage');
+    const blob = new Blob([data || '{}'], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `auron_backup_${format(new Date(), 'yyyy-MM-dd')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const json = event.target?.result as string;
+            JSON.parse(json); // Validate it is somewhat valid JSON
+            localStorage.setItem('auron-storage', json);
+            window.location.reload();
+        } catch (err) {
+            alert('Invalid backup file. Make sure it is an official AURON backup.');
+        }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-8">
       <div>
@@ -154,6 +182,33 @@ export function Settings() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-xl font-bold tracking-tighter uppercase mb-4 text-[#7c6aff]">System Data</h2>
+        <div className="bg-[#13131a] border border-[#2a2a3a] rounded-xl p-4 md:p-6 space-y-4 text-sm">
+          <p className="text-[#7a7a9a] mb-4">
+            AURON is fully offline-first. All your data is stored locally on this device. Use these tools to back up your progress across devices.
+          </p>
+          <div className="flex gap-4">
+            <button 
+              onClick={handleExport}
+              className="flex-1 py-3 bg-[#1c1c27] border border-[#2a2a3a] rounded font-bold hover:bg-[#2a2a3a] transition-colors text-white"
+            >
+              Export Backup
+            </button>
+            <label className="flex-1 py-3 bg-[#1c1c27] border border-[#2a2a3a] rounded font-bold hover:bg-[#2a2a3a] transition-colors text-white text-center cursor-pointer">
+              <span>Import Backup</span>
+              <input 
+                type="file" 
+                accept="application/json" 
+                className="hidden" 
+                onChange={handleImport}
+              />
+            </label>
+          </div>
+          <p className="text-[10px] text-orange-500 uppercase font-bold text-center mt-2">Warning: Importing a backup will overwrite current data</p>
         </div>
       </div>
     </div>

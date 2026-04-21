@@ -7,6 +7,7 @@ import { Mindset } from './components/Mindset';
 import { Navigation } from './components/Navigation';
 import { AddHabitModal } from './components/AddHabitModal';
 import { Settings } from './components/Settings';
+import { AlarmManager } from './components/AlarmManager';
 
 export default function App() {
   const settings = useStore((state) => state.settings);
@@ -64,6 +65,7 @@ export default function App() {
 
   return (
     <div className="w-full h-full bg-[#0a0a0f] text-[#e8e8f0] font-sans flex flex-col overflow-hidden select-none">
+      <AlarmManager />
       <header className="h-16 px-4 md:px-6 flex items-center justify-between border-b border-[#2a2a3a] bg-[#0d0d14] sticky top-0 z-50 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8">

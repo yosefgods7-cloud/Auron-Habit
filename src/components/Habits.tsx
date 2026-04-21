@@ -71,8 +71,14 @@ Format: numbered list, each point max 25 words. No intro.`,
                   {habit.icon}
                 </div>
                 <div>
-                  <h4 className="font-bold">{habit.name}</h4>
+                  <h4 className="font-bold flex items-center gap-2">
+                    {habit.name}
+                    {habit.alarmEnabled && <span className="text-[#00d4ff] text-xs">⏰ {habit.reminderTime}</span>}
+                  </h4>
                   <p className="text-xs text-[#7a7a9a] uppercase tracking-wider">{habit.category} • {habit.timeslot}</p>
+                  {habit.description && (
+                    <p className="text-[10px] text-[#7a7a9a] italic mt-1 line-clamp-1">{habit.description}</p>
+                  )}
                 </div>
               </div>
               <button 

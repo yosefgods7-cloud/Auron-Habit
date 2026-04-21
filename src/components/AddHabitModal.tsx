@@ -18,6 +18,8 @@ export function AddHabitModal({ onClose }: AddHabitModalProps) {
   const [difficulty, setDifficulty] = useState(1);
   const [protocol, setProtocol] = useState('General');
   const [reminderTime, setReminderTime] = useState('');
+  const [description, setDescription] = useState('');
+  const [alarmEnabled, setAlarmEnabled] = useState(false);
 
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -38,6 +40,8 @@ export function AddHabitModal({ onClose }: AddHabitModalProps) {
       color: '#7c6aff',
       difficulty,
       why: '',
+      description: description.trim(),
+      alarmEnabled,
       reminderTime: reminderTime || null,
       graceDay: false,
     });
@@ -202,13 +206,35 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#7a7a9a] uppercase mb-1">Reminder Time (Optional)</label>
-            <input 
-              type="time" 
-              value={reminderTime}
-              onChange={(e) => setReminderTime(e.target.value)}
-              className="w-full bg-[#1c1c27] border border-[#2a2a3a] rounded p-3 text-white focus:outline-none focus:border-[#7c6aff]"
+            <label className="block text-xs font-bold text-[#7a7a9a] uppercase mb-1">Description / Task Notes</label>
+            <textarea 
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full bg-[#1c1c27] border border-[#2a2a3a] rounded p-3 text-white focus:outline-none focus:border-[#7c6aff] resize-none h-20"
+              placeholder="Provide more specific instructions or why you are doing this..."
             />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <label className="block text-xs font-bold text-[#7a7a9a] uppercase mb-1">Reminder Time (Optional)</label>
+              <input 
+                type="time" 
+                value={reminderTime}
+                onChange={(e) => setReminderTime(e.target.value)}
+                className="w-full bg-[#1c1c27] border border-[#2a2a3a] rounded p-3 text-white focus:outline-none focus:border-[#7c6aff]"
+              />
+            </div>
+            
+            <div className="flex flex-col items-center">
+               <label className="block text-xs font-bold text-[#7a7a9a] uppercase mb-2">Enable Alarm</label>
+               <input 
+                 type="checkbox"
+                 checked={alarmEnabled}
+                 onChange={(e) => setAlarmEnabled(e.target.checked)}
+                 className="w-6 h-6 rounded border-[#2a2a3a] bg-[#1c1c27] text-[#7c6aff] focus:ring-[#7c6aff]"
+               />
+            </div>
           </div>
 
           <div>

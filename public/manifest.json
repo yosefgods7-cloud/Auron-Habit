@@ -1,0 +1,17 @@
+{
+  "name": "AURON",
+  "short_name": "AURON",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0d0d14",
+  "description": "Daily Habit & Mindset Mastery",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -16,6 +16,8 @@ export interface Habit {
   color: string;
   difficulty: number;
   why: string;
+  description?: string;
+  alarmEnabled?: boolean;
   reminderTime: string | null;
   graceDay: boolean;
   order: number;
