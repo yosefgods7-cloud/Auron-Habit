@@ -46,6 +46,7 @@ export interface DailyData {
   forgeScore?: number;
   xpEarned?: number;
   stoicResponse?: string;
+  forgeBrief?: string;
 }
 
 export interface GrowthLog {
@@ -65,6 +66,8 @@ interface AppState {
     userName: string;
     avatarEmoji: string;
     onboardingDone: boolean;
+    geminiKey: string | null;
+    identityStatement: string;
   };
   meta: {
     totalXP: number;
@@ -74,7 +77,9 @@ interface AppState {
     totalRepsCompleted: number;
     currentStreak: number;
     longestStreak: number;
+    geminiUsage: Record<string, { requests: number, tokensIn: number, tokensOut: number }>;
   };
+  aiCache: Record<string, { text: string; timestamp: number }>;
   
   // Actions
   addHabit: (habit: Omit<Habit, 'id' | 'createdAt' | 'archived' | 'order'>) => void;
@@ -86,6 +91,8 @@ interface AppState {
   updateSettings: (settings: Partial<AppState['settings']>) => void;
   completeOnboarding: (userName: string, avatarEmoji: string, defaultHabits: Habit[]) => void;
   earnXp: (amount: number) => void;
+  setAiCache: (key: string, data: { text: string; timestamp: number }) => void;
+  trackAiUsage: (date: string, tokensIn: number, tokensOut: number) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -100,6 +107,8 @@ export const useStore = create<AppState>()(
         userName: 'Warrior',
         avatarEmoji: '🦁',
         onboardingDone: false,
+        geminiKey: null,
+        identityStatement: 'I am someone who leads by discipline and action.',
       },
       meta: {
         totalXP: 0,
@@ -109,7 +118,9 @@ export const useStore = create<AppState>()(
         totalRepsCompleted: 0,
         currentStreak: 0,
         longestStreak: 0,
+        geminiUsage: {},
       },
+      aiCache: {},
 
       addHabit: (habit) => set((state) => ({
         habits: [...state.habits, { ...habit, id: generateId(), createdAt: new Date().toISOString(), archived: false, order: state.habits.length }]
@@ -163,6 +174,27 @@ export const useStore = create<AppState>()(
           meta: {
             ...state.meta,
             totalXP: newTotal,
+          }
+        };
+      }),
+
+      setAiCache: (key, data) => set((state) => ({
+        aiCache: { ...state.aiCache, [key]: data }
+      })),
+
+      trackAiUsage: (date, tokensIn, tokensOut) => set((state) => {
+        const current = state.meta.geminiUsage[date] || { requests: 0, tokensIn: 0, tokensOut: 0 };
+        return {
+          meta: {
+            ...state.meta,
+            geminiUsage: {
+              ...state.meta.geminiUsage,
+              [date]: {
+                requests: current.requests + 1,
+                tokensIn: current.tokensIn + tokensIn,
+                tokensOut: current.tokensOut + tokensOut
+              }
+            }
           }
         };
       })

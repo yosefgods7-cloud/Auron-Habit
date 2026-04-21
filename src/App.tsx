@@ -6,10 +6,11 @@ import { Intel } from './components/Intel';
 import { Mindset } from './components/Mindset';
 import { Navigation } from './components/Navigation';
 import { AddHabitModal } from './components/AddHabitModal';
+import { Settings } from './components/Settings';
 
 export default function App() {
   const settings = useStore((state) => state.settings);
-  const [activeTab, setActiveTab] = useState<'arena'|'habits'|'intel'|'mindset'>('arena');
+  const [activeTab, setActiveTab] = useState<'arena'|'habits'|'intel'|'mindset'|'settings'>('arena');
   const [mounted, setMounted] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -84,12 +85,17 @@ export default function App() {
             </div>
           </div>
           <div className="px-2 md:px-3 py-1 bg-[#1c1c27] border border-[#2a2a3a] rounded flex items-center gap-1 md:gap-2">
+            {settings.geminiKey && <span className="text-[#7c6aff] mr-1" title="AURON Intelligence Active">✦</span>}
             <span className="text-[10px] font-bold text-[#00d4ff] uppercase">Lvl {useStore.getState().meta.level}</span>
             <span className="text-xs font-bold text-[#e8e8f0] truncate max-w-[60px] md:max-w-[80px]">{settings.userName}</span>
           </div>
-          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#7c6aff] flex items-center justify-center text-lg md:text-xl shrink-0">
+          <button 
+            onClick={() => setActiveTab('settings')}
+            className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#7c6aff] flex items-center justify-center text-lg md:text-xl shrink-0 transition-transform active:scale-95"
+            title="Settings"
+          >
             {settings.avatarEmoji}
-          </div>
+          </button>
         </div>
       </header>
 
@@ -98,6 +104,7 @@ export default function App() {
         {activeTab === 'habits' && <Habits />}
         {activeTab === 'intel' && <Intel />}
         {activeTab === 'mindset' && <Mindset />}
+        {activeTab === 'settings' && <Settings />}
       </main>
 
       <Navigation activeTab={activeTab} setActiveTab={setActiveTab} onAddClick={() => setIsAddModalOpen(true)} />

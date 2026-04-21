@@ -1,16 +1,46 @@
+import { useState, useEffect } from 'react';
 import { useStore } from '../lib/store';
-import { cn, generateId } from '../lib/utils';
+import { cn } from '../lib/utils';
 import { format } from 'date-fns';
+import { callGemini } from '../lib/gemini';
 
 export function Arena() {
   const habits = useStore(state => state.habits);
   const logs = useStore(state => state.logs);
   const daily = useStore(state => state.daily);
+  const meta = useStore(state => state.meta);
   const toggleLog = useStore(state => state.toggleLog);
-
+  const settings = useStore(state => state.settings);
+  const updateDaily = useStore(state => state.updateDaily);
+  
   const today = format(new Date(), 'yyyy-MM-dd');
   const todayLogs = logs.filter(l => l.date === today);
   const todayData = daily[today] || {};
+
+  const [aiBrief, setAiBrief] = useState<string | null>(todayData.forgeBrief || null);
+  const [isBriefLoading, setIsBriefLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadBrief() {
+      if (!settings.geminiKey || todayData.forgeBrief || isBriefLoading) return;
+      
+      setIsBriefLoading(true);
+      try {
+        const text = await callGemini(
+          "Write a 2-sentence personalized morning brief for this warrior. Reference their actual habits and streaks. Be direct, motivating, coach-like. No fluff. End with one sharp action directive. Max 60 words.", 
+          150, 
+          `brief_${today}`
+        );
+        setAiBrief(text);
+        updateDaily(today, { forgeBrief: text });
+      } catch (err) {
+        console.error("Failed to load brief", err);
+      } finally {
+        setIsBriefLoading(false);
+      }
+    }
+    loadBrief();
+  }, [settings.geminiKey, today, todayData.forgeBrief]);
 
   const completedCount = habits.length > 0 
     ? habits.filter(h => todayLogs.find(l => l.habitId === h.id && l.completed)).length
@@ -55,13 +85,31 @@ export function Arena() {
           </div>
         </div>
         
-        <div className="lg:col-span-6 border-y lg:border-y-0 lg:border-x border-[#2a2a3a] py-4 lg:py-0 lg:px-6 w-full text-center lg:text-left">
+        <div className="lg:col-span-6 border-y lg:border-y-0 lg:border-x border-[#2a2a3a] py-4 lg:py-0 lg:px-6 w-full text-center lg:text-left relative min-h-[100px] flex flex-col justify-center">
           <div className="mb-2 flex items-center justify-center lg:justify-start gap-2">
-            <span className="text-xs font-bold text-[#7c6aff] uppercase tracking-tighter">The Arena</span>
+            <span className={cn("text-xs font-bold uppercase tracking-tighter", settings.geminiKey ? "text-[#7c6aff]" : "text-[#7a7a9a]")}>
+              {settings.geminiKey ? "✦ Your Forge Brief" : "The Arena"}
+            </span>
             <div className="h-px flex-1 bg-[#2a2a3a] hidden lg:block"></div>
           </div>
-          <h2 className="text-xl md:text-2xl font-bold italic mb-2">"We suffer more in imagination than in reality."</h2>
-          <p className="text-xs md:text-sm text-[#7a7a9a]">— Seneca • Morning Intention: Focus on what I control.</p>
+          
+          {settings.geminiKey ? (
+             isBriefLoading ? (
+                <p className="text-sm text-[#7a7a9a] py-2 animate-pulse">✦ Analyzing warrior data...</p>
+             ) : aiBrief ? (
+                <div>
+                   <p className="text-sm md:text-base text-[#e8e8f0] font-sans leading-relaxed">{aiBrief}</p>
+                   <p className="text-[9px] text-[#7a7a9a] mt-2 uppercase tracking-widest">Powered by Gemini · Generated Today</p>
+                </div>
+             ) : (
+                <p className="text-sm text-[#ff6b6b] py-2">Brief unavailable. Check connection.</p>
+             )
+          ) : (
+            <>
+              <h2 className="text-xl md:text-2xl font-bold italic mb-2">"We suffer more in imagination than in reality."</h2>
+              <p className="text-xs md:text-sm text-[#7a7a9a]">— Seneca • Morning Intention: Focus on what I control.</p>
+            </>
+          )}
         </div>
 
         <div className="lg:col-span-3 space-y-4 w-full">
