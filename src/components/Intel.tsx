@@ -7,18 +7,18 @@ import { callGemini } from '../lib/gemini';
 export function Intel() {
   const settings = useStore(state => state.settings);
   const longestStreak = useStore(state => state.meta.longestStreak);
-  const [activeSubTab, setActiveSubTab] = useState<'metrics'|'dna'|'triggers'>('metrics');
+  const [activeSubTab, setActiveSubTab] = useState<'metrics'|'dna'|'triggers'|'challenges'>('metrics');
 
   return (
     <div className="p-4 md:p-6 flex flex-col h-full max-w-4xl mx-auto w-full">
        <div className="flex justify-between items-center mb-6">
          <h2 className="text-xl md:text-2xl font-bold tracking-tighter uppercase text-app-text-main">Intel & Strategy</h2>
          <div className="flex bg-app-surface border border-app-border rounded overflow-hidden">
-           {['metrics', 'dna', 'triggers'].map(tab => (
+           {['metrics', 'dna', 'triggers', 'challenges'].map(tab => (
              <button
                key={tab}
                onClick={() => setActiveSubTab(tab as any)}
-               className={cn("px-4 py-2 text-xs font-bold uppercase", activeSubTab === tab ? "bg-app-primary text-white" : "text-app-text-muted hover:bg-app-elevated")}
+               className={cn("px-3 py-2 text-[10px] md:text-xs font-bold uppercase", activeSubTab === tab ? "bg-app-primary text-white" : "text-app-text-muted hover:bg-app-elevated")}
              >
                {tab}
              </button>
@@ -29,8 +29,80 @@ export function Intel() {
        {activeSubTab === 'metrics' && <MetricsView />}
        {activeSubTab === 'dna' && <DnaView longestStreak={longestStreak} geminiKey={settings.geminiKey} />}
        {activeSubTab === 'triggers' && <TriggersView geminiKey={settings.geminiKey} />}
+       {activeSubTab === 'challenges' && <ChallengesView />}
     </div>
   )
+}
+
+function ChallengesView() {
+  const challenges = useStore(state => state.challenges) || [];
+  const startChallenge = useStore(state => state.startChallenge);
+  const progressChallenge = useStore(state => state.progressChallenge);
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-app-surface border border-app-border rounded-xl p-6">
+        <h3 className="text-sm font-bold uppercase tracking-widest text-[#FFC107] mb-2">Tactical Challenges</h3>
+        <p className="text-xs text-app-text-muted mb-6">Opt-in to time-bound, intense protocols to earn badges.</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {challenges.map(challenge => {
+            const isActive = challenge.startDate !== null && !challenge.completed;
+            const progressPct = (challenge.progressDays / challenge.durationDays) * 100;
+
+            return (
+              <div key={challenge.id} className="border border-app-border rounded-lg bg-app-elevated p-4 flex flex-col justify-between group relative overflow-hidden">
+                {challenge.completed && (
+                  <div className="absolute inset-0 bg-app-success bg-opacity-10 z-0 pointer-events-none"></div>
+                )}
+                <div className="z-10">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{challenge.icon}</span>
+                      <h4 className="font-bold text-sm text-app-text-main">{challenge.name}</h4>
+                    </div>
+                    {challenge.completed && <span className="text-[#FFC107] text-xl" title={challenge.rewardBadge}>🏅</span>}
+                  </div>
+                  <p className="text-xs text-app-text-muted mb-4 h-8">{challenge.description}</p>
+                </div>
+
+                <div className="z-10 mt-auto">
+                  {!challenge.startDate && !challenge.completed ? (
+                    <button 
+                      onClick={() => startChallenge(challenge.id)}
+                      className="w-full py-2 bg-app-primary text-white text-xs font-bold rounded uppercase tracking-wider hover:bg-opacity-90"
+                    >
+                      Accept Protocol
+                    </button>
+                  ) : isActive ? (
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-[10px] uppercase font-bold text-app-text-muted">
+                        <span>Progress</span>
+                        <span>{challenge.progressDays} / {challenge.durationDays} Days</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-app-border rounded-full overflow-hidden">
+                        <div className="h-full bg-[#FFC107] transition-all" style={{ width: `${progressPct}%` }}></div>
+                      </div>
+                      <button 
+                        onClick={() => progressChallenge(challenge.id)}
+                        className="w-full py-2 bg-[#FFC107] text-black text-xs font-bold rounded uppercase tracking-wider hover:bg-opacity-90"
+                      >
+                        Log Daily Rep
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-full py-2 border border-app-success text-app-success text-center text-xs font-bold rounded uppercase tracking-wider">
+                      Protocol Mastered
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function MetricsView() {

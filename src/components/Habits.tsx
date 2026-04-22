@@ -5,7 +5,11 @@ import { callGemini } from '../lib/gemini';
 import { cn } from '../lib/utils';
 import { AutopsyModal } from './AutopsyModal';
 
-export function Habits() {
+interface HabitsProps {
+  onEditHabit?: (id: string) => void;
+}
+
+export function Habits({ onEditHabit }: HabitsProps) {
   const habits = useStore(state => state.habits);
   const settings = useStore(state => state.settings);
   const archiveHabit = useStore(state => state.archiveHabit);
@@ -117,17 +121,44 @@ Format: numbered list, each point max 25 words. No intro.`,
                       <p className="text-xs text-app-text-muted uppercase tracking-wider">{habit.category} • {habit.timeslot}</p>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => {
-                      if (confirm('Are you sure you want to archive this habit?')) {
-                        archiveHabit(habit.id);
-                      }
-                    }}
-                    className="w-8 h-8 flex items-center justify-center rounded bg-app-elevated border border-app-border text-app-danger hover:bg-app-border transition-colors opacity-0 group-hover:opacity-100"
-                    title="Archive Habit"
-                  >
-                    ✕
-                  </button>
+                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => onEditHabit?.(habit.id)}
+                      className="w-8 h-8 flex items-center justify-center rounded text-app-text-muted hover:bg-app-elevated hover:text-app-info transition-colors"
+                      title="Edit Habit"
+                    >
+                      ✎
+                    </button>
+                    <button 
+                      onClick={() => useStore.getState().duplicateHabit(habit.id)}
+                      className="w-8 h-8 flex items-center justify-center rounded text-app-text-muted hover:bg-app-elevated hover:text-app-primary transition-colors"
+                      title="Duplicate Habit"
+                    >
+                      ⧉
+                    </button>
+                    <button 
+                      onClick={() => {
+                        if (confirm('Archive this habit? It keeps historical data.')) {
+                          archiveHabit(habit.id);
+                        }
+                      }}
+                      className="w-8 h-8 flex items-center justify-center rounded text-app-text-muted hover:bg-app-elevated hover:text-app-orange transition-colors"
+                      title="Archive Habit"
+                    >
+                      📦
+                    </button>
+                    <button 
+                      onClick={() => {
+                        if (confirm('Delete this habit AND all its history forever?')) {
+                          useStore.getState().deleteHabit(habit.id);
+                        }
+                      }}
+                      className="w-8 h-8 flex items-center justify-center rounded text-app-text-muted hover:bg-app-elevated hover:text-app-danger transition-colors text-xl leading-none"
+                      title="Delete Habit"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
                 
                 {habit.description && (

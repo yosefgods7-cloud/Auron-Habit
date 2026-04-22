@@ -20,9 +20,16 @@ export function Arena() {
   const todayLogs = logs.filter(l => l.date === today);
   const todayData = daily[today] || {};
   const todayTasks = (useStore(state => state.dailyTasks) || []).filter(t => t.date === today);
+  const todayWins = (useStore(state => state.growth) || []).filter(g => g.date.startsWith(today) && g.type === 'win');
   
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isAddingTask, setIsAddingTask] = useState(false);
+  
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingTaskTitle, setEditingTaskTitle] = useState('');
+
+  const [newWinText, setNewWinText] = useState('');
+  const [isAddingWin, setIsAddingWin] = useState(false);
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +37,21 @@ export function Arena() {
     useStore.getState().addDailyTask({ title: newTaskTitle.trim(), date: today, completed: false });
     setNewTaskTitle('');
     setIsAddingTask(false);
+  };
+
+  const handleAddWin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newWinText.trim()) return;
+    useStore.getState().addGrowthLog({ type: 'win', text: newWinText.trim() });
+    setNewWinText('');
+    setIsAddingWin(false);
+  };
+
+  const saveTaskEdit = (id: string) => {
+    if (editingTaskTitle.trim()) {
+      useStore.getState().updateDailyTask(id, { title: editingTaskTitle.trim() });
+    }
+    setEditingTaskId(null);
   };
 
   const [aiBrief, setAiBrief] = useState<string | null>(todayData.forgeBrief || null);
@@ -366,24 +388,102 @@ No intro. No padding. Max 60 words.`;
                 <p className="text-xs text-app-text-muted italic py-2 md:col-span-2 lg:col-span-3">No one-off targets set for today.</p>
              )}
              {todayTasks.map(task => (
-               <div key={task.id} className="flex items-center justify-between p-3 rounded-lg bg-app-surface border border-app-border group">
-                 <div className="flex items-center gap-3 overflow-hidden">
-                   <button 
-                     onClick={() => useStore.getState().toggleDailyTask(task.id)}
-                     className={cn(
-                       "w-5 h-5 rounded border flex justify-center items-center shrink-0 transition-colors",
-                       task.completed ? "bg-app-primary border-app-primary text-white" : "border-app-text-muted text-transparent"
-                     )}
+               <div key={task.id} className="flex items-center justify-between p-2 rounded-lg bg-app-surface border border-app-border group">
+                 {editingTaskId === task.id ? (
+                   <form 
+                     className="flex-1 flex gap-2"
+                     onSubmit={(e) => { e.preventDefault(); saveTaskEdit(task.id); }}
                    >
-                     <span className="text-[10px]">✓</span>
-                   </button>
-                   <span className={cn("text-sm truncate", task.completed ? "line-through text-app-text-muted" : "text-app-text-main")}>
-                     {task.title}
-                   </span>
+                     <input 
+                       autoFocus
+                       className="flex-1 bg-app-elevated border border-app-primary px-2 py-1 text-sm text-white focus:outline-none rounded"
+                       value={editingTaskTitle}
+                       onChange={(e) => setEditingTaskTitle(e.target.value)}
+                       onBlur={() => saveTaskEdit(task.id)}
+                     />
+                   </form>
+                 ) : (
+                   <>
+                     <div className="flex items-center gap-3 overflow-hidden flex-1">
+                       <button 
+                         onClick={() => useStore.getState().toggleDailyTask(task.id)}
+                         className={cn(
+                           "w-5 h-5 rounded border flex justify-center items-center shrink-0 transition-colors",
+                           task.completed ? "bg-app-primary border-app-primary text-white" : "border-app-text-muted text-transparent"
+                         )}
+                       >
+                         <span className="text-[10px]">✓</span>
+                       </button>
+                       <span className={cn("text-sm truncate", task.completed ? "line-through text-app-text-muted" : "text-app-text-main")}>
+                         {task.title}
+                       </span>
+                     </div>
+                     <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                       <button 
+                         onClick={() => { setEditingTaskId(task.id); setEditingTaskTitle(task.title); }}
+                         className="text-app-text-muted hover:text-app-info px-2 text-xs"
+                         title="Edit"
+                       >
+                         ✎
+                       </button>
+                       <button 
+                         onClick={() => useStore.getState().duplicateDailyTask(task.id)}
+                         className="text-app-text-muted hover:text-app-primary px-2 text-xs"
+                         title="Duplicate"
+                       >
+                         ⧉
+                       </button>
+                       <button 
+                         onClick={() => useStore.getState().deleteDailyTask(task.id)}
+                         className="text-app-text-muted hover:text-app-danger px-2 text-xl leading-none"
+                         title="Delete"
+                       >
+                         ×
+                       </button>
+                     </div>
+                   </>
+                 )}
+               </div>
+             ))}
+           </div>
+        </section>
+
+        {/* DAILY WINS */}
+        <section className="space-y-3 lg:col-span-2">
+           <div className="flex justify-between items-end border-b border-app-border pb-1">
+             <h3 className="text-xs font-bold uppercase tracking-widest text-[#FFC107]">Daily Wins</h3>
+             <button onClick={() => setIsAddingWin(!isAddingWin)} className="text-[10px] font-bold uppercase text-[#FFC107]">
+               + Add Win
+             </button>
+           </div>
+           
+           {isAddingWin && (
+             <form onSubmit={handleAddWin} className="flex gap-2">
+               <input 
+                 type="text" 
+                 autoFocus
+                 value={newWinText}
+                 onChange={(e) => setNewWinText(e.target.value)}
+                 placeholder="What small achievement or positive moment happened?" 
+                 className="flex-1 bg-app-elevated border border-app-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#FFC107]"
+               />
+               <button type="submit" className="bg-[#FFC107] text-black px-3 py-2 rounded text-sm font-bold">Add</button>
+             </form>
+           )}
+
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+             {todayWins.length === 0 && !isAddingWin && (
+                <p className="text-xs text-app-text-muted italic py-2 md:col-span-2">No wins noted yet. Seize a small victory.</p>
+             )}
+             {todayWins.map(win => (
+               <div key={win.id} className="flex items-center justify-between p-3 rounded-lg bg-app-surface border border-[#FFC107] border-opacity-30 group">
+                 <div className="flex items-center gap-3">
+                   <div className="text-[#FFC107]">🏆</div>
+                   <span className="text-sm text-app-text-main">{win.text}</span>
                  </div>
                  <button 
-                   onClick={() => useStore.getState().deleteDailyTask(task.id)}
-                   className="text-app-text-muted hover:text-app-danger opacity-0 group-hover:opacity-100 transition-opacity px-2"
+                   onClick={() => useStore.getState().deleteGrowthLog(win.id)}
+                   className="text-app-text-muted hover:text-app-danger opacity-0 group-hover:opacity-100 transition-opacity px-2 text-xl leading-none"
                  >
                    ×
                  </button>

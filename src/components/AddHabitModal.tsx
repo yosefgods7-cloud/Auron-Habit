@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useStore, HabitCategory, Timeslot } from '../lib/store';
 import { cn } from '../lib/utils';
@@ -6,11 +6,14 @@ import { callGemini } from '../lib/gemini';
 
 interface AddHabitModalProps {
   onClose: () => void;
+  editHabitId?: string;
 }
 
-export function AddHabitModal({ onClose }: AddHabitModalProps) {
+export function AddHabitModal({ onClose, editHabitId }: AddHabitModalProps) {
   const addHabit = useStore(state => state.addHabit);
+  const updateHabit = useStore(state => state.updateHabit);
   const settings = useStore(state => state.settings);
+  const habits = useStore(state => state.habits);
 
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('💪');
@@ -22,6 +25,23 @@ export function AddHabitModal({ onClose }: AddHabitModalProps) {
   const [description, setDescription] = useState('');
   const [alarmEnabled, setAlarmEnabled] = useState(false);
 
+  useEffect(() => {
+    if (editHabitId) {
+      const h = habits.find(h => h.id === editHabitId);
+      if (h) {
+         setName(h.name);
+         setIcon(h.icon);
+         setCategory(h.category);
+         setTimeslot(h.timeslot);
+         setDifficulty(h.difficulty);
+         setProtocol(h.protocol);
+         setReminderTime(h.reminderTime || '');
+         setDescription(h.description || '');
+         setAlarmEnabled(h.alarmEnabled || false);
+      }
+    }
+  }, [editHabitId, habits]);
+
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
 
@@ -31,21 +51,35 @@ export function AddHabitModal({ onClose }: AddHabitModalProps) {
     e.preventDefault();
     if (!name.trim()) return;
 
-    addHabit({
-      name: name.trim(),
-      icon,
-      category,
-      protocol: protocol.trim() || 'General',
-      frequency: { type: 'daily' },
-      timeslot,
-      color: 'var(--color-app-primary)',
-      difficulty,
-      why: '',
-      description: description.trim(),
-      alarmEnabled,
-      reminderTime: reminderTime || null,
-      graceDay: false,
-    });
+    if (editHabitId) {
+      updateHabit(editHabitId, {
+        name: name.trim(),
+        icon,
+        category,
+        protocol: protocol.trim() || 'General',
+        timeslot,
+        difficulty,
+        description: description.trim(),
+        alarmEnabled,
+        reminderTime: reminderTime || null,
+      });
+    } else {
+      addHabit({
+        name: name.trim(),
+        icon,
+        category,
+        protocol: protocol.trim() || 'General',
+        frequency: { type: 'daily' },
+        timeslot,
+        color: 'var(--color-app-primary)',
+        difficulty,
+        why: '',
+        description: description.trim(),
+        alarmEnabled,
+        reminderTime: reminderTime || null,
+        graceDay: false,
+      });
+    }
     
     onClose();
   };
@@ -103,8 +137,8 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
       <div className="bg-app-bg border border-app-border rounded-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6 border-b border-app-border pb-4">
           <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold uppercase text-app-primary">New Habit</h2>
-            {settings.geminiKey && (
+            <h2 className="text-xl font-bold uppercase text-app-primary">{editHabitId ? 'Edit Habit' : 'New Habit'}</h2>
+            {settings.geminiKey && !editHabitId && (
               <button 
                 type="button"
                 onClick={handleSuggest}
@@ -262,7 +296,7 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
               type="submit"
               className="w-full py-3 bg-app-primary text-white font-bold rounded-lg shadow-[0_4px_16px_rgba(124,106,255,0.4)]"
             >
-              Add to Protocol
+              {editHabitId ? 'Update Habit' : 'Add to Protocol'}
             </button>
           </div>
         </form>

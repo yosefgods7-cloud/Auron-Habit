@@ -70,12 +70,25 @@ export interface GrowthLog {
   text: string;
 }
 
+export interface Challenge {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  durationDays: number;
+  startDate: string | null;
+  progressDays: number;
+  completed: boolean;
+  rewardBadge: string;
+}
+
 interface AppState {
   habits: Habit[];
   logs: DayLog[];
   dailyTasks: DailyTask[];
   daily: Record<string, DailyData>;
   growth: GrowthLog[];
+  challenges: Challenge[];
   settings: {
     theme: string;
     userName: string;
@@ -100,12 +113,16 @@ interface AppState {
   addHabit: (habit: Omit<Habit, 'id' | 'createdAt' | 'archived' | 'order'>) => void;
   updateHabit: (id: string, updates: Partial<Habit>) => void;
   archiveHabit: (id: string) => void;
+  deleteHabit: (id: string) => void;
+  duplicateHabit: (id: string) => void;
   toggleLog: (habitId: string, date: string, xpEarned: number) => void;
   skipHabit: (habitId: string, date: string, reason: string) => void;
   
   addDailyTask: (task: Omit<DailyTask, 'id' | 'createdAt'>) => void;
+  updateDailyTask: (id: string, updates: Partial<DailyTask>) => void;
   toggleDailyTask: (id: string) => void;
   deleteDailyTask: (id: string) => void;
+  duplicateDailyTask: (id: string) => void;
 
   updateDaily: (date: string, updates: Partial<DailyData>) => void;
   addGrowthLog: (log: Omit<GrowthLog, 'id' | 'date'>) => void;
@@ -114,6 +131,10 @@ interface AppState {
   earnXp: (amount: number) => void;
   setAiCache: (key: string, data: { text: string; timestamp: number }) => void;
   trackAiUsage: (date: string, tokensIn: number, tokensOut: number) => void;
+
+  startChallenge: (id: string) => void;
+  progressChallenge: (id: string) => void;
+  deleteGrowthLog: (id: string) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -142,6 +163,11 @@ export const useStore = create<AppState>()(
         longestStreak: 0,
         geminiUsage: {},
       },
+      challenges: [
+        { id: 'c1', name: '7-Day Hydration', icon: '💧', description: 'Log your water intake every day for 7 days.', durationDays: 7, startDate: null, progressDays: 0, completed: false, rewardBadge: 'Hydro-Initiate' },
+        { id: 'c2', name: '14-Day Sleep Protocol', icon: '🛌', description: '7+ hours of sleep for 14 consecutive nights.', durationDays: 14, startDate: null, progressDays: 0, completed: false, rewardBadge: 'Sleep Master' },
+        { id: 'c3', name: 'Digital Detox', icon: '📵', description: 'No social media for 3 days.', durationDays: 3, startDate: null, progressDays: 0, completed: false, rewardBadge: 'Unplugged' },
+      ],
       aiCache: {},
 
       addHabit: (habit) => set((state) => ({
@@ -155,6 +181,24 @@ export const useStore = create<AppState>()(
       archiveHabit: (id) => set((state) => ({
         habits: state.habits.map((h) => h.id === id ? { ...h, archived: true } : h)
       })),
+
+      deleteHabit: (id) => set((state) => ({
+        habits: state.habits.filter((h) => h.id !== id),
+        logs: state.logs.filter((l) => l.habitId !== id)
+      })),
+
+      duplicateHabit: (id) => set((state) => {
+        const habitToDuplicate = state.habits.find(h => h.id === id);
+        if (!habitToDuplicate) return state;
+        const newHabit = { 
+          ...habitToDuplicate, 
+          id: generateId(), 
+          name: `${habitToDuplicate.name} (Copy)`,
+          createdAt: new Date().toISOString(),
+          order: state.habits.length
+        };
+        return { habits: [...state.habits, newHabit] };
+      }),
 
       toggleLog: (habitId, date, xpEarned) => set((state) => {
         const existingInfo = state.logs.find(l => l.habitId === habitId && l.date === date);
@@ -191,6 +235,10 @@ export const useStore = create<AppState>()(
         dailyTasks: [...(state.dailyTasks || []), { ...task, id: generateId(), createdAt: new Date().toISOString() }]
       })),
 
+      updateDailyTask: (id, updates) => set((state) => ({
+        dailyTasks: state.dailyTasks.map(t => t.id === id ? { ...t, ...updates } : t)
+      })),
+
       toggleDailyTask: (id) => set((state) => ({
         dailyTasks: state.dailyTasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t)
       })),
@@ -198,6 +246,19 @@ export const useStore = create<AppState>()(
       deleteDailyTask: (id) => set((state) => ({
         dailyTasks: state.dailyTasks.filter(t => t.id !== id)
       })),
+
+      duplicateDailyTask: (id) => set((state) => {
+        const taskToDuplicate = state.dailyTasks.find(t => t.id === id);
+        if (!taskToDuplicate) return state;
+        const newTask = {
+          ...taskToDuplicate,
+          id: generateId(),
+          title: `${taskToDuplicate.title} (Copy)`,
+          createdAt: new Date().toISOString(),
+          completed: false
+        };
+        return { dailyTasks: [...state.dailyTasks, newTask] };
+      }),
 
       updateDaily: (date, updates) => set((state) => {
         const safeDaily = state.daily || {};
@@ -209,6 +270,10 @@ export const useStore = create<AppState>()(
 
       addGrowthLog: (log) => set((state) => ({
         growth: [{ ...log, id: generateId(), date: new Date().toISOString() }, ...state.growth]
+      })),
+
+      deleteGrowthLog: (id) => set((state) => ({
+        growth: state.growth.filter(g => g.id !== id)
       })),
 
       updateSettings: (updates) => set((state) => ({
@@ -249,7 +314,29 @@ export const useStore = create<AppState>()(
             }
           }
         };
-      })
+      }),
+
+      startChallenge: (id) => set((state) => ({
+        challenges: state.challenges.map(c => 
+          c.id === id ? { ...c, startDate: new Date().toISOString(), progressDays: 0, completed: false } : c
+        )
+      })),
+
+      progressChallenge: (id) => set((state) => ({
+        challenges: state.challenges.map(c => {
+          if (c.id === id) {
+            const newProgress = c.progressDays + 1;
+            const isCompleted = newProgress >= c.durationDays;
+            return {
+              ...c,
+              progressDays: newProgress,
+              completed: isCompleted,
+              ...(isCompleted && { startDate: null }) // Optionally clear startDate on complete, or keep it to track when it was done
+            };
+          }
+          return c;
+        })
+      }))
     }),
     { name: 'auron-storage' }
   )

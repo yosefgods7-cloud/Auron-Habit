@@ -16,6 +16,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'arena'|'habits'|'intel'|'mindset'|'settings'>('arena');
   const [mounted, setMounted] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
 
   useEffect(() => {
@@ -76,7 +77,7 @@ export default function App() {
 
       <main className="flex-1 overflow-y-auto pb-24">
         {activeTab === 'arena' && <Arena />}
-        {activeTab === 'habits' && <Habits />}
+        {activeTab === 'habits' && <Habits onEditHabit={(id) => setEditingHabitId(id)} />}
         {activeTab === 'intel' && <Intel />}
         {activeTab === 'mindset' && <Mindset />}
         {activeTab === 'settings' && <Settings />}
@@ -85,6 +86,7 @@ export default function App() {
       <Navigation activeTab={activeTab} setActiveTab={setActiveTab} onAddClick={() => setIsAddModalOpen(true)} />
       
       {isAddModalOpen && <AddHabitModal onClose={() => setIsAddModalOpen(false)} />}
+      {editingHabitId && <AddHabitModal editHabitId={editingHabitId} onClose={() => setEditingHabitId(null)} />}
     </div>
   );
 }
