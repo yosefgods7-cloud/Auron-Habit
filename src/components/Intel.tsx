@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store';
 import { cn } from '../lib/utils';
-import { getMomentumData } from '../lib/momentum';
 import { callGemini } from '../lib/gemini';
+import { AnalyticsDashboard } from './AnalyticsDashboard';
 
 export function Intel() {
   const settings = useStore(state => state.settings);
@@ -11,14 +11,14 @@ export function Intel() {
 
   return (
     <div className="p-4 md:p-6 flex flex-col h-full max-w-4xl mx-auto w-full">
-       <div className="flex justify-between items-center mb-6">
+       <div className="flex justify-between items-center mb-6 border-b border-app-border pb-4">
          <h2 className="text-xl md:text-2xl font-bold tracking-tighter uppercase text-app-text-main">Intel & Strategy</h2>
          <div className="flex bg-app-surface border border-app-border rounded overflow-hidden">
            {['metrics', 'dna', 'triggers', 'challenges'].map(tab => (
              <button
                key={tab}
                onClick={() => setActiveSubTab(tab as any)}
-               className={cn("px-3 py-2 text-[10px] md:text-xs font-bold uppercase", activeSubTab === tab ? "bg-app-primary text-white" : "text-app-text-muted hover:bg-app-elevated")}
+               className={cn("px-2 md:px-3 py-1.5 md:py-2 text-[10px] md:text-xs font-bold uppercase", activeSubTab === tab ? "bg-app-primary text-white" : "text-app-text-muted hover:bg-app-elevated")}
              >
                {tab}
              </button>
@@ -26,7 +26,7 @@ export function Intel() {
          </div>
        </div>
 
-       {activeSubTab === 'metrics' && <MetricsView />}
+       {activeSubTab === 'metrics' && <AnalyticsDashboard />}
        {activeSubTab === 'dna' && <DnaView longestStreak={longestStreak} />}
        {activeSubTab === 'triggers' && <TriggersView />}
        {activeSubTab === 'challenges' && <ChallengesView />}
@@ -105,86 +105,7 @@ function ChallengesView() {
   );
 }
 
-function MetricsView() {
-  const { momentum, last7Avg, prior7Avg } = getMomentumData();
-  const [analysis, setAnalysis] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const runAnalysis = async () => {
-    const key = useStore.getState().settings.geminiKey;
-    if (!key) {
-      alert("Please configure your free Gemini API key in Settings -> AI");
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const text = await callGemini(
-        `Act as an elite behavioral analyst. Look at my recent metrics and habit data. Give me:
-1. "PERFORMANCE ANALYSIS" (1 short paragraph identifying where I'm succeeding and what is failing)
-2. "NEW PROTOCOL SUGGESTION" (1 highly specific, realistic new habit to solve the failure point or push me to the next level).
-Limit to concise tactical output.`,
-        250,
-        `perf_analysis_${new Date().toISOString().split('T')[0]}`
-      );
-      setAnalysis(text);
-    } catch (e: any) {
-      alert(e.message || "Analysis failed");
-      console.error(e);
-    }
-    setIsLoading(false);
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-app-surface border border-app-border rounded-xl p-6">
-        <h3 className="text-sm font-bold uppercase tracking-widest text-app-text-muted mb-6">Momentum Score</h3>
-        <div className="flex items-center gap-6">
-          <div className="flex-1 text-center">
-            <p className="text-app-text-main text-3xl font-mono font-bold">{prior7Avg}%</p>
-            <p className="text-[10px] text-app-text-muted uppercase mt-1">Previous 7 Days</p>
-          </div>
-          <div className="flex-1 text-center flex flex-col items-center">
-            <span className={cn("text-2xl font-bold px-4 py-1 rounded", 
-               momentum > 0 ? "text-app-success bg-app-success bg-opacity-10" : momentum < 0 ? "text-app-danger bg-app-danger bg-opacity-10" : "text-app-orange bg-app-orange bg-opacity-10"
-            )}>
-               {momentum > 0 ? '+' : ''}{momentum}%
-            </span>
-            <p className="text-[10px] text-app-text-muted uppercase mt-2">Trajectory</p>
-          </div>
-          <div className="flex-1 text-center">
-            <p className="text-app-text-main text-3xl font-mono font-bold">{last7Avg}%</p>
-            <p className="text-[10px] text-app-text-muted uppercase mt-1">Last 7 Days</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-app-surface border border-app-border rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-app-primary">AI Performance Analysis & Blueprint</h3>
-        </div>
-        
-        {analysis ? (
-          <div className="text-sm text-app-text-main font-sans leading-relaxed whitespace-pre-wrap">
-            {analysis}
-          </div>
-        ) : (
-          <div className="text-center py-4">
-            <p className="text-xs text-app-text-muted mb-4 md:px-12 leading-relaxed">
-              Generate a tactical breakdown of your recent performance momentum. The system will analyze your history and recommend a single, targeted new protocol to accelerate your growth. Locked to one request daily to preserve bandwidth.
-            </p>
-            <button 
-              onClick={runAnalysis}
-              disabled={isLoading}
-              className="px-6 py-2 bg-app-white text-app-black font-bold uppercase text-xs rounded hover:bg-opacity-90 transition-colors disabled:opacity-50"
-            >
-              {isLoading ? 'Analyzing Data...' : 'Generate Analysis & Blueprint'}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function DnaView({ longestStreak }: { longestStreak: number }) {
   const [dnaResult, setDnaResult] = useState<string | null>(null);
