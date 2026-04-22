@@ -21,6 +21,7 @@ export function Habits({ onEditHabit }: HabitsProps) {
   const [isCoachLoading, setIsCoachLoading] = useState(false);
   
   const [autopsyModalId, setAutopsyModalId] = useState<string | null>(null);
+  const [expandedHabitId, setExpandedHabitId] = useState<string | null>(null);
 
   const activeHabits = habits.filter(h => !h.archived);
   
@@ -107,8 +108,11 @@ Format: numbered list, each point max 25 words. No intro.`,
             const { needsAutopsy, suggestLevelUp } = checkHabitStatus(habit.id, habit.createdAt);
             
             return (
-              <div key={habit.id} className="bg-app-surface border border-app-border rounded-xl p-4 relative overflow-hidden group">
-                <div className="flex items-center justify-between mb-2">
+              <div key={habit.id} className="bg-app-surface border border-app-border rounded-xl p-4 relative overflow-hidden transition-colors">
+                <div 
+                  className="flex items-center justify-between cursor-pointer"
+                  onClick={() => setExpandedHabitId(expandedHabitId === habit.id ? null : habit.id)}
+                >
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full border border-app-border flex items-center justify-center text-lg bg-app-elevated">
                       {habit.icon}
@@ -121,48 +125,60 @@ Format: numbered list, each point max 25 words. No intro.`,
                       <p className="text-xs text-app-text-muted uppercase tracking-wider">{habit.category} • {habit.timeslot}</p>
                     </div>
                   </div>
-                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                      onClick={() => onEditHabit?.(habit.id)}
-                      className="w-8 h-8 flex items-center justify-center rounded text-app-text-muted hover:bg-app-elevated hover:text-app-info transition-colors"
-                      title="Edit Habit"
-                    >
-                      ✎
-                    </button>
-                    <button 
-                      onClick={() => useStore.getState().duplicateHabit(habit.id)}
-                      className="w-8 h-8 flex items-center justify-center rounded text-app-text-muted hover:bg-app-elevated hover:text-app-primary transition-colors"
-                      title="Duplicate Habit"
-                    >
-                      ⧉
-                    </button>
-                    <button 
-                      onClick={() => {
-                        if (confirm('Archive this habit? It keeps historical data.')) {
-                          archiveHabit(habit.id);
-                        }
-                      }}
-                      className="w-8 h-8 flex items-center justify-center rounded text-app-text-muted hover:bg-app-elevated hover:text-app-orange transition-colors"
-                      title="Archive Habit"
-                    >
-                      📦
-                    </button>
-                    <button 
-                      onClick={() => {
-                        if (confirm('Delete this habit AND all its history forever?')) {
-                          useStore.getState().deleteHabit(habit.id);
-                        }
-                      }}
-                      className="w-8 h-8 flex items-center justify-center rounded text-app-text-muted hover:bg-app-elevated hover:text-app-danger transition-colors text-xl leading-none"
-                      title="Delete Habit"
-                    >
-                      ✕
-                    </button>
+                  <div className="text-app-text-muted text-xs">
+                    {expandedHabitId === habit.id ? '▲' : '▼'}
                   </div>
                 </div>
                 
                 {habit.description && (
-                  <p className="text-xs text-app-text-muted mt-2 mb-2 line-clamp-2">{habit.description}</p>
+                  <p className="text-xs text-app-text-muted mt-3 mb-2 line-clamp-2">{habit.description}</p>
+                )}
+
+                {expandedHabitId === habit.id && (
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-app-border bg-app-elevated -mx-4 -mb-4 px-4 py-2">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onEditHabit?.(habit.id); setExpandedHabitId(null); }}
+                      className="flex-1 flex flex-col items-center justify-center py-2 text-app-text-muted hover:text-app-info transition-colors"
+                      title="Edit Habit"
+                    >
+                      <span className="text-lg mb-1">✎</span>
+                      <span className="text-[10px] uppercase font-bold tracking-wider">Edit</span>
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); useStore.getState().duplicateHabit(habit.id); setExpandedHabitId(null); }}
+                      className="flex-1 flex flex-col items-center justify-center py-2 text-app-text-muted hover:text-app-primary transition-colors"
+                      title="Duplicate Habit"
+                    >
+                      <span className="text-lg mb-1">⧉</span>
+                      <span className="text-[10px] uppercase font-bold tracking-wider">Duplicate</span>
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm('Archive this habit? It keeps historical data.')) {
+                          archiveHabit(habit.id);
+                        }
+                      }}
+                      className="flex-1 flex flex-col items-center justify-center py-2 text-app-text-muted hover:text-app-orange transition-colors"
+                      title="Archive Habit"
+                    >
+                      <span className="text-lg mb-1">📦</span>
+                      <span className="text-[10px] uppercase font-bold tracking-wider">Archive</span>
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm('Delete this habit AND all its history forever?')) {
+                          useStore.getState().deleteHabit(habit.id);
+                        }
+                      }}
+                      className="flex-1 flex flex-col items-center justify-center py-2 text-app-text-muted hover:text-app-danger transition-colors"
+                      title="Delete Habit"
+                    >
+                      <span className="text-lg mb-1 leading-none">✕</span>
+                      <span className="text-[10px] uppercase font-bold tracking-wider">Delete</span>
+                    </button>
+                  </div>
                 )}
                 
                 {(needsAutopsy || suggestLevelUp) && settings.geminiKey && (

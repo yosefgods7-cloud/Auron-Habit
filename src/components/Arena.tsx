@@ -27,6 +27,8 @@ export function Arena() {
   
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTaskTitle, setEditingTaskTitle] = useState('');
+  
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   const [newWinText, setNewWinText] = useState('');
   const [isAddingWin, setIsAddingWin] = useState(false);
@@ -388,7 +390,7 @@ No intro. No padding. Max 60 words.`;
                 <p className="text-xs text-app-text-muted italic py-2 md:col-span-2 lg:col-span-3">No one-off targets set for today.</p>
              )}
              {todayTasks.map(task => (
-               <div key={task.id} className="flex items-center justify-between p-2 rounded-lg bg-app-surface border border-app-border group">
+               <div key={task.id} className="flex flex-col p-2 rounded-lg bg-app-surface border border-app-border transition-colors">
                  {editingTaskId === task.id ? (
                    <form 
                      className="flex-1 flex gap-2"
@@ -404,43 +406,53 @@ No intro. No padding. Max 60 words.`;
                    </form>
                  ) : (
                    <>
-                     <div className="flex items-center gap-3 overflow-hidden flex-1">
-                       <button 
-                         onClick={() => useStore.getState().toggleDailyTask(task.id)}
-                         className={cn(
-                           "w-5 h-5 rounded border flex justify-center items-center shrink-0 transition-colors",
-                           task.completed ? "bg-app-primary border-app-primary text-white" : "border-app-text-muted text-transparent"
-                         )}
-                       >
-                         <span className="text-[10px]">✓</span>
-                       </button>
-                       <span className={cn("text-sm truncate", task.completed ? "line-through text-app-text-muted" : "text-app-text-main")}>
-                         {task.title}
-                       </span>
+                     <div 
+                       className="flex items-center justify-between cursor-pointer"
+                       onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                     >
+                       <div className="flex items-center gap-3 overflow-hidden flex-1">
+                         <button 
+                           onClick={(e) => { e.stopPropagation(); useStore.getState().toggleDailyTask(task.id); }}
+                           className={cn(
+                             "w-5 h-5 rounded border flex justify-center items-center shrink-0 transition-colors",
+                             task.completed ? "bg-app-primary border-app-primary text-white" : "border-app-text-muted text-transparent"
+                           )}
+                         >
+                           <span className="text-[10px]">✓</span>
+                         </button>
+                         <span className={cn("text-sm truncate", task.completed ? "line-through text-app-text-muted" : "text-app-text-main")}>
+                           {task.title}
+                         </span>
+                       </div>
+                       <div className="text-app-text-muted text-xs ml-2 px-2">
+                         {expandedTaskId === task.id ? '▲' : '▼'}
+                       </div>
                      </div>
-                     <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                       <button 
-                         onClick={() => { setEditingTaskId(task.id); setEditingTaskTitle(task.title); }}
-                         className="text-app-text-muted hover:text-app-info px-2 text-xs"
-                         title="Edit"
-                       >
-                         ✎
-                       </button>
-                       <button 
-                         onClick={() => useStore.getState().duplicateDailyTask(task.id)}
-                         className="text-app-text-muted hover:text-app-primary px-2 text-xs"
-                         title="Duplicate"
-                       >
-                         ⧉
-                       </button>
-                       <button 
-                         onClick={() => useStore.getState().deleteDailyTask(task.id)}
-                         className="text-app-text-muted hover:text-app-danger px-2 text-xl leading-none"
-                         title="Delete"
-                       >
-                         ×
-                       </button>
-                     </div>
+                     {expandedTaskId === task.id && (
+                       <div className="flex items-center justify-end mt-2 pt-2 border-t border-app-border gap-2">
+                         <button 
+                           onClick={(e) => { e.stopPropagation(); setEditingTaskId(task.id); setEditingTaskTitle(task.title); }}
+                           className="flex items-center gap-1 text-app-text-muted hover:text-app-info px-2 py-1 text-[10px] uppercase font-bold tracking-wider bg-app-elevated rounded transition-colors"
+                           title="Edit"
+                         >
+                           <span className="text-sm">✎</span> Edit
+                         </button>
+                         <button 
+                           onClick={(e) => { e.stopPropagation(); useStore.getState().duplicateDailyTask(task.id); setExpandedTaskId(null); }}
+                           className="flex items-center gap-1 text-app-text-muted hover:text-app-primary px-2 py-1 text-[10px] uppercase font-bold tracking-wider bg-app-elevated rounded transition-colors"
+                           title="Duplicate"
+                         >
+                           <span className="text-sm">⧉</span> Duplicate
+                         </button>
+                         <button 
+                           onClick={(e) => { e.stopPropagation(); useStore.getState().deleteDailyTask(task.id); }}
+                           className="flex items-center gap-1 text-app-text-muted hover:text-app-danger px-2 py-1 text-[10px] uppercase font-bold tracking-wider bg-app-elevated rounded transition-colors"
+                           title="Delete"
+                         >
+                           <span className="text-sm leading-none">✕</span> Delete
+                         </button>
+                       </div>
+                     )}
                    </>
                  )}
                </div>
