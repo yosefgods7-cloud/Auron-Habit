@@ -94,7 +94,7 @@ export async function callGemini(prompt: string, maxTokens = 300, featureKey: st
   const safeMeta = state.meta || {};
   const safeUsage = (safeMeta as any).geminiUsage || {};
   const usage = safeUsage[today] || { requests: 0 };
-  if (usage.requests >= 30) throw new Error('QUOTA_EXCEEDED');
+  if (usage.requests >= 60) throw new Error('QUOTA_EXCEEDED');
 
   await waitForQueue();
 
@@ -103,7 +103,7 @@ export async function callGemini(prompt: string, maxTokens = 300, featureKey: st
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -119,9 +119,9 @@ export async function callGemini(prompt: string, maxTokens = 300, featureKey: st
     );
 
     if (res.status === 429) {
-      await new Promise(r => setTimeout(r, 2000)); // Basic retry backoff
+      await new Promise(r => setTimeout(r, 2000));
       const retryRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

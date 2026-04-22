@@ -84,7 +84,7 @@ Format: numbered list, each point max 25 words. No intro.`,
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold tracking-tighter uppercase text-app-primary">Habits Protocol</h2>
         <div className="flex items-center gap-3">
-          {settings.geminiKey && activeHabits.length > 0 && (
+          {activeHabits.length > 0 && (
             <button 
               onClick={handleAskCoach}
               className="text-[10px] font-bold uppercase tracking-widest text-app-primary border border-app-primary border-opacity-50 px-2 py-1 rounded hover:bg-app-primary hover:bg-opacity-10 transition-colors flex items-center gap-1"
@@ -181,7 +181,7 @@ Format: numbered list, each point max 25 words. No intro.`,
                   </div>
                 )}
                 
-                {(needsAutopsy || suggestLevelUp) && settings.geminiKey && (
+                {(needsAutopsy || suggestLevelUp) && (
                   <div className="mt-3 pt-3 border-t border-app-border flex gap-2">
                     {needsAutopsy && (
                        <button 

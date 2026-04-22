@@ -138,7 +138,7 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
         <div className="flex justify-between items-center mb-6 border-b border-app-border pb-4">
           <div className="flex items-center gap-4">
             <h2 className="text-xl font-bold uppercase text-app-primary">{editHabitId ? 'Edit Habit' : 'New Habit'}</h2>
-            {settings.geminiKey && !editHabitId && (
+            {!editHabitId && (
               <button 
                 type="button"
                 onClick={handleSuggest}

@@ -6,6 +6,7 @@ import { callGemini } from '../lib/gemini';
 import { getMomentumData, calculateForgeScore } from '../lib/momentum';
 import { ResistanceModal } from './ResistanceModal';
 import { GamePlanModal } from './GamePlanModal';
+import { getStaticDailyQuote } from '../lib/quotes';
 
 export function Arena() {
   const habits = useStore(state => state.habits);
@@ -64,6 +65,8 @@ export function Arena() {
   const [longPressMenu, setLongPressMenu] = useState<string | null>(null);
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
 
+  const [quote, setQuote] = useState<{text: string, author: string} | null>(todayData.quote || null);
+
   const hour = new Date().getHours();
   const isEvening = hour >= 19;
 
@@ -82,7 +85,10 @@ const isSunday = format(new Date(), 'EEEE') === 'Sunday';
   const [isHardQLoading, setIsHardQLoading] = useState(false);
 
   const loadHardQuestion = async () => {
-    if (!settings.geminiKey || !isSunday) return;
+    if (!settings.geminiKey || !isSunday) {
+      alert("Please configure your free Gemini API key in Settings -> AI");
+      return;
+    }
     const cacheKey = `hardq_${currentWeek}`;
     const cached = useStore.getState().aiCache['ai_' + cacheKey];
     if (cached) {
@@ -104,7 +110,8 @@ Rules:
 Output ONLY the question. No intro. No context. Max 40 words.`;
       const res = await callGemini(prompt, 120, cacheKey);
       setHardQuestion(res);
-    } catch (e) {
+    } catch (e: any) {
+      alert(e.message || "Failed to load question");
       console.error(e);
     } finally {
       setIsHardQLoading(false);
@@ -112,7 +119,11 @@ Output ONLY the question. No intro. No context. Max 40 words.`;
   };
 
   const loadBrief = async () => {
-    if (!settings.geminiKey || todayData.forgeBrief || isBriefLoading) return;
+    if (!settings.geminiKey) {
+      alert("Please configure your free Gemini API key in Settings -> AI");
+      return;
+    }
+    if (todayData.forgeBrief || isBriefLoading) return;
     
     setIsBriefLoading(true);
     try {
@@ -123,7 +134,8 @@ Output ONLY the question. No intro. No context. Max 40 words.`;
       );
       setAiBrief(text);
       updateDaily(today, { forgeBrief: text });
-    } catch (err) {
+    } catch (err: any) {
+      alert(err.message || "Failed to load brief");
       console.error("Failed to load brief", err);
     } finally {
       setIsBriefLoading(false);
@@ -142,6 +154,41 @@ Output ONLY the question. No intro. No context. Max 40 words.`;
        }
     }
   }, [todayData.forgeBrief, isSunday, currentWeek]);
+
+  useEffect(() => {
+    if (todayData.quote) {
+      setQuote(todayData.quote);
+      return;
+    }
+
+    let isSubscribed = true;
+
+    const fetchQuote = async () => {
+      try {
+        const res = await callGemini(
+          `Provide ONE incredibly powerful, discipline-focused "warrior" quote. New and rare, not cliché. Max 15 words. Output ONLY a valid JSON object with {"text": "...", "author": "..."}.`,
+          100,
+          `quote_${today}`
+        );
+        if (!isSubscribed) return;
+        const cleanStr = res.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleanStr);
+        setQuote(parsed);
+        useStore.getState().updateDaily(today, { quote: parsed });
+      } catch (e) {
+        if (!isSubscribed) return;
+        const fallback = getStaticDailyQuote(today);
+        setQuote(fallback);
+        useStore.getState().updateDaily(today, { quote: fallback });
+      }
+    };
+
+    fetchQuote();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [today, todayData.quote, settings.geminiKey]);
 
   const { momentum } = getMomentumData();
   const pct = calculateForgeScore(today);
@@ -245,69 +292,79 @@ No intro. No padding. Max 60 words.`;
         </div>
         
         <div className="lg:col-span-6 border-y lg:border-y-0 lg:border-x border-app-border py-4 lg:py-0 lg:px-6 w-full text-center lg:text-left relative min-h-[100px] flex flex-col justify-center">
-          <div className="mb-2 flex items-center justify-center lg:justify-start gap-2">
-            <span className={cn("text-xs font-bold uppercase tracking-tighter", 
-              todayData.gamePlan ? "text-app-info" : isSunday ? "text-app-orange" : settings.geminiKey ? "text-app-primary" : "text-app-text-muted"
-            )}>
-              {todayData.gamePlan ? "✦ Today's Game Plan" : isSunday ? "✦ The Hard Question" : settings.geminiKey ? "✦ Your Forge Brief" : "The Arena"}
-            </span>
-            <div className="h-px flex-1 bg-app-border hidden lg:block"></div>
-          </div>
-          
-          {todayData.gamePlan ? (
-            <div className="text-left">
-               <p className="text-xs md:text-sm text-app-text-main font-sans leading-relaxed whitespace-pre-wrap max-h-[150px] overflow-y-auto">
-                 {todayData.gamePlan.text}
-               </p>
-               {todayData.gamePlan.skipList?.length > 0 && (
-                 <p className="text-[10px] text-app-orange mt-2 uppercase">Scheduled Skips: {todayData.gamePlan.skipList.join(', ')}</p>
-               )}
+
+          {quote ? (
+            <div className="mb-4">
+              <h2 className="text-xl md:text-2xl font-bold italic text-app-text-main leading-snug break-words">
+                "{quote.text}"
+              </h2>
+              <p className="text-xs md:text-sm text-app-text-muted uppercase tracking-widest mt-2 font-bold">— {quote.author}</p>
             </div>
-          ) : isSunday && settings.geminiKey ? (
-             isHardQLoading ? (
-                <p className="text-sm text-app-text-muted py-2 animate-pulse">✦ Analyzing uncomfortable truths...</p>
-             ) : hardQuestion ? (
-                <div>
-                   <p className="text-sm md:text-base text-app-orange font-serif italic leading-relaxed">{hardQuestion}</p>
-                </div>
-             ) : (
-                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 py-2">
-                   <p className="text-sm text-app-text-muted text-center lg:text-left">Ready to face today's hard question?</p>
-                   <button 
-                     onClick={loadHardQuestion}
-                     className="px-4 py-1.5 bg-app-elevated text-app-orange border border-app-orange/30 text-xs font-bold uppercase rounded hover:bg-app-orange/10 transition-colors"
-                   >
-                     Generate Question
-                   </button>
-                </div>
-             )
-          ) : settings.geminiKey ? (
-             isBriefLoading ? (
-                <p className="text-sm text-app-text-muted py-2 animate-pulse">✦ Analyzing warrior data...</p>
-             ) : aiBrief ? (
-                <div>
-                   <p className="text-sm md:text-base text-app-text-main font-sans leading-relaxed">{aiBrief}</p>
-                   <p className="text-[9px] text-app-text-muted mt-2 uppercase tracking-widest">Powered by Gemini · Generated Today</p>
-                </div>
-             ) : (
-                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 py-2">
-                   <p className="text-sm text-app-text-muted text-center lg:text-left">Start your day with an elite tactical brief.</p>
-                   <button 
-                     onClick={loadBrief}
-                     className="px-4 py-1.5 bg-app-elevated text-app-primary border border-app-primary/30 text-xs font-bold uppercase rounded hover:bg-app-primary/10 transition-colors shrink-0"
-                   >
-                     Generate Brief
-                   </button>
-                </div>
-             )
           ) : (
-            <>
-              <h2 className="text-xl md:text-2xl font-bold italic mb-2">"We suffer more in imagination than in reality."</h2>
-              <p className="text-xs md:text-sm text-app-text-muted">— Seneca • Morning Intention: Focus on what I control.</p>
-            </>
+            <div className="animate-pulse flex flex-col gap-2 mb-4 w-full">
+               <div className="h-6 bg-app-elevated rounded w-3/4 mx-auto lg:mx-0"></div>
+               <div className="h-6 bg-app-elevated rounded w-1/2 mx-auto lg:mx-0"></div>
+               <div className="h-4 bg-app-elevated rounded w-1/4 mt-2 mx-auto lg:mx-0"></div>
+            </div>
           )}
 
-          {isEvening && !todayData.survivalMode && settings.geminiKey && (
+          {(todayData.gamePlan || isSunday || settings.geminiKey) && (
+            <div className="border-t border-app-border pt-3 mt-1">
+              {todayData.gamePlan ? (
+                <div className="text-left">
+                   <div className="mb-1 flex items-center justify-start gap-2">
+                     <span className="text-[10px] font-bold uppercase tracking-tighter text-app-info">✦ Today's Game Plan</span>
+                   </div>
+                   <p className="text-xs md:text-sm text-app-text-main font-sans leading-relaxed whitespace-pre-wrap max-h-[100px] overflow-y-auto">
+                     {todayData.gamePlan.text}
+                   </p>
+                   {todayData.gamePlan.skipList?.length > 0 && (
+                     <p className="text-[10px] text-app-orange mt-2 uppercase">Scheduled Skips: {todayData.gamePlan.skipList.join(', ')}</p>
+                   )}
+                </div>
+              ) : isSunday ? (
+                 isHardQLoading ? (
+                    <p className="text-[10px] uppercase font-bold text-app-text-muted py-1 animate-pulse">✦ Analyzing uncomfortable truths...</p>
+                 ) : hardQuestion ? (
+                    <div className="text-left">
+                       <span className="text-[10px] font-bold uppercase tracking-tighter text-app-orange mb-1 block">✦ The Hard Question</span>
+                       <p className="text-sm text-app-orange font-serif italic py-1 leading-relaxed">{hardQuestion}</p>
+                    </div>
+                 ) : (
+                    <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 py-1">
+                       <p className="text-xs text-app-text-muted text-center lg:text-left">Ready to face today's hard question?</p>
+                       <button 
+                         onClick={loadHardQuestion}
+                         className="px-3 py-1 bg-app-elevated text-app-orange border border-app-orange/30 text-[10px] font-bold uppercase rounded hover:bg-app-orange/10 transition-colors"
+                       >
+                         Generate Question
+                       </button>
+                    </div>
+                 )
+              ) : (
+                 isBriefLoading ? (
+                    <p className="text-[10px] uppercase font-bold text-app-text-muted py-1 animate-pulse">✦ Analyzing warrior data...</p>
+                 ) : aiBrief ? (
+                    <div className="text-left">
+                       <span className="text-[10px] font-bold uppercase tracking-tighter text-app-primary mb-1 block">✦ Forge Brief</span>
+                       <p className="text-xs text-app-text-main font-sans leading-relaxed">{aiBrief}</p>
+                    </div>
+                 ) : (
+                    <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 py-1">
+                       <p className="text-xs text-app-text-muted text-center lg:text-left">Start your day with an elite tactical brief.</p>
+                       <button 
+                         onClick={loadBrief}
+                         className="px-3 py-1 bg-app-elevated text-app-primary border border-app-primary/30 text-[10px] font-bold uppercase rounded hover:bg-app-primary/10 transition-colors shrink-0"
+                       >
+                         Generate Brief
+                       </button>
+                    </div>
+                 )
+              )}
+            </div>
+          )}
+
+          {isEvening && !todayData.survivalMode && (
             <div className="absolute bottom-4 right-[120px] lg:bottom-0 lg:right-[150px]">
               <button 
                 onClick={() => setIsPlanModalOpen(true)}

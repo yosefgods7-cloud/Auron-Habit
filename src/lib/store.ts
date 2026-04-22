@@ -53,6 +53,7 @@ export interface DailyData {
   survivalMode?: boolean;
   survivalHabits?: string[];
   gamePlan?: any;
+  quote?: { text: string; author: string };
 }
 
 export interface DailyTask {

@@ -319,7 +319,7 @@ export function Settings() {
                 <div>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-app-text-muted">Requests</span>
-                    <span className="font-mono">{usageToday.requests}/15</span>
+                    <span className="font-mono">{usageToday.requests}/60</span>
                   </div>
                   <div className="w-full h-1.5 bg-app-elevated rounded-full overflow-hidden">
                     <div className="h-full bg-app-primary transition-all" style={{ width: `${reqPct}%` }}></div>

@@ -36,6 +36,11 @@ export function Mindset() {
 
   const handleGetInsight = async () => {
     if (!reflectionText.trim() || aiStoicInsight) return;
+    const key = useStore.getState().settings.geminiKey;
+    if (!key) {
+      alert("Please configure your free Gemini API key in Settings -> AI");
+      return;
+    }
     setIsInsightLoading(true);
     try {
       const text = await callGemini(
@@ -53,6 +58,11 @@ export function Mindset() {
   };
 
   const handleAnalyzePattern = async () => {
+    const key = useStore.getState().settings.geminiKey;
+    if (!key) {
+      alert("Please configure your free Gemini API key in Settings -> AI");
+      return;
+    }
     setIsAnalysisLoading(true);
     try {
       const text = await callGemini(
@@ -65,7 +75,8 @@ Max 20 words per bullet. Be precise and direct.`,
         `mindset_${today}`
       );
       setAiAnalysis(text);
-    } catch (err) {
+    } catch (err: any) {
+      alert(err.message || "Failed to analyze pattern");
       console.error(err);
     } finally {
       setIsAnalysisLoading(false);
@@ -73,6 +84,11 @@ Max 20 words per bullet. Be precise and direct.`,
   };
 
   const handleGapReport = async () => {
+    const key = useStore.getState().settings.geminiKey;
+    if (!key) {
+       alert("Please configure your free Gemini API key in Settings -> AI");
+       return;
+    }
     setIsGapLoading(true);
     try {
        const text = await callGemini(`IDENTITY GAP REPORT
@@ -88,7 +104,8 @@ Provide:
 
 Format clearly. Max 100 words.`, 250, `gap_${format(new Date(), 'yyyy-MM')}`, true);
        setGapReport(text);
-    } catch(e) {
+    } catch(e: any) {
+      alert(e.message || "Failed to generate report");
       console.error(e);
     } finally {
       setIsGapLoading(false);
@@ -96,6 +113,11 @@ Format clearly. Max 100 words.`, 250, `gap_${format(new Date(), 'yyyy-MM')}`, tr
   };
 
   const handleAccountabilityLetter = async () => {
+    const key = useStore.getState().settings.geminiKey;
+    if (!key) {
+       alert("Please configure your free Gemini API key in Settings -> AI");
+       return;
+    }
     setIsLetterLoading(true);
     try {
       const text = await callGemini(`Write 2 short letters from the user's Future Self (6 months from now).
@@ -145,7 +167,7 @@ Write from the first-person perspective ("I am you..."). Make them visceral and 
              Save Entry
            </button>
 
-           {settings.geminiKey && reflectionText.length > 5 && !aiStoicInsight && (
+           {reflectionText.length > 5 && !aiStoicInsight && (
              <button 
                onClick={handleGetInsight}
                disabled={isInsightLoading}
@@ -172,7 +194,7 @@ Write from the first-person perspective ("I am you..."). Make them visceral and 
          <div className="flex flex-col space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-widest text-app-text-muted">Mindset Check-In</h3>
-               {settings.geminiKey && !isCheckInMode && (
+               {!isCheckInMode && (
                  <button 
                    onClick={handleAnalyzePattern}
                    disabled={isAnalysisLoading}
@@ -226,7 +248,7 @@ Write from the first-person perspective ("I am you..."). Make them visceral and 
          </div>
       </section>
 
-      {settings.geminiKey && (
+      {true && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <section className="bg-app-surface border border-app-border rounded-xl p-4 md:p-6">
             <h3 className="text-sm font-bold uppercase tracking-widest text-app-success mb-4 flex justify-between items-center">

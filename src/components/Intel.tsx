@@ -27,8 +27,8 @@ export function Intel() {
        </div>
 
        {activeSubTab === 'metrics' && <MetricsView />}
-       {activeSubTab === 'dna' && <DnaView longestStreak={longestStreak} geminiKey={settings.geminiKey} />}
-       {activeSubTab === 'triggers' && <TriggersView geminiKey={settings.geminiKey} />}
+       {activeSubTab === 'dna' && <DnaView longestStreak={longestStreak} />}
+       {activeSubTab === 'triggers' && <TriggersView />}
        {activeSubTab === 'challenges' && <ChallengesView />}
     </div>
   )
@@ -107,6 +107,32 @@ function ChallengesView() {
 
 function MetricsView() {
   const { momentum, last7Avg, prior7Avg } = getMomentumData();
+  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const runAnalysis = async () => {
+    const key = useStore.getState().settings.geminiKey;
+    if (!key) {
+      alert("Please configure your free Gemini API key in Settings -> AI");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const text = await callGemini(
+        `Act as an elite behavioral analyst. Look at my recent metrics and habit data. Give me:
+1. "PERFORMANCE ANALYSIS" (1 short paragraph identifying where I'm succeeding and what is failing)
+2. "NEW PROTOCOL SUGGESTION" (1 highly specific, realistic new habit to solve the failure point or push me to the next level).
+Limit to concise tactical output.`,
+        250,
+        `perf_analysis_${new Date().toISOString().split('T')[0]}`
+      );
+      setAnalysis(text);
+    } catch (e: any) {
+      alert(e.message || "Analysis failed");
+      console.error(e);
+    }
+    setIsLoading(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -131,12 +157,36 @@ function MetricsView() {
           </div>
         </div>
       </div>
-      {/* Could add graph here later */}
+
+      <div className="bg-app-surface border border-app-border rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-bold uppercase tracking-widest text-app-primary">AI Performance Analysis & Blueprint</h3>
+        </div>
+        
+        {analysis ? (
+          <div className="text-sm text-app-text-main font-sans leading-relaxed whitespace-pre-wrap">
+            {analysis}
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-xs text-app-text-muted mb-4 md:px-12 leading-relaxed">
+              Generate a tactical breakdown of your recent performance momentum. The system will analyze your history and recommend a single, targeted new protocol to accelerate your growth. Locked to one request daily to preserve bandwidth.
+            </p>
+            <button 
+              onClick={runAnalysis}
+              disabled={isLoading}
+              className="px-6 py-2 bg-app-white text-app-black font-bold uppercase text-xs rounded hover:bg-opacity-90 transition-colors disabled:opacity-50"
+            >
+              {isLoading ? 'Analyzing Data...' : 'Generate Analysis & Blueprint'}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function DnaView({ longestStreak, geminiKey }: { longestStreak: number, geminiKey: string | null }) {
+function DnaView({ longestStreak }: { longestStreak: number }) {
   const [dnaResult, setDnaResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const habits = useStore(state => state.habits);
@@ -145,7 +195,12 @@ function DnaView({ longestStreak, geminiKey }: { longestStreak: number, geminiKe
   const isUnlocked = longestStreak >= 30;
 
   const handleRunProfiler = async () => {
-    if (!isUnlocked || !geminiKey) return;
+    if (!isUnlocked) return;
+    const key = useStore.getState().settings.geminiKey;
+    if (!key) {
+      alert("Please configure your free Gemini API key in Settings -> AI");
+      return;
+    }
     setIsLoading(true);
     try {
       const activeHabits = habits.filter(h => !h.archived);
@@ -172,7 +227,8 @@ Max 80 words. Speak like an elite coach.`;
 
       const res = await callGemini(prompt, 200, 'dna_profile', true);
       setDnaResult(res);
-    } catch (e) {
+    } catch (e: any) {
+      alert(e.message || "DNA profiling failed");
       console.error(e);
     } finally {
       setIsLoading(false);
@@ -198,7 +254,7 @@ Max 80 words. Speak like an elite coach.`;
           <p className="text-app-text-main text-sm mb-6">Analyzing your long-term success patterns to determine your behavioral archetype.</p>
           <button 
             onClick={handleRunProfiler}
-            disabled={isLoading || !geminiKey}
+            disabled={isLoading}
             className="px-6 py-3 bg-app-primary text-white font-bold rounded"
           >
             {isLoading ? "Sequencing DNA..." : "Sequence Habit DNA"}
@@ -213,13 +269,18 @@ Max 80 words. Speak like an elite coach.`;
   );
 }
 
-function TriggersView({ geminiKey }: { geminiKey: string | null }) {
+function TriggersView() {
   const [failures, setFailures] = useState("");
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleMap = async () => {
-    if (!failures || !geminiKey) return;
+    if (!failures) return;
+    const key = useStore.getState().settings.geminiKey;
+    if (!key) {
+      alert("Please configure your free Gemini API key in Settings -> AI");
+      return;
+    }
     setIsLoading(true);
     try {
       const prompt = `User's stated failure points/triggers: "${failures}"
@@ -230,7 +291,8 @@ Format as a bulleted list. The recovery action MUST be extremely easy (under 2 m
 
       const res = await callGemini(prompt, 180, 'trigger_map', true);
       setResult(res);
-    } catch(e) {
+    } catch(e: any) {
+      alert(e.message || "Failed to generate triggers");
       console.error(e);
     } finally {
       setIsLoading(false);
@@ -251,10 +313,10 @@ Format as a bulleted list. The recovery action MUST be extremely easy (under 2 m
           />
           <button 
             onClick={handleMap}
-            disabled={isLoading || !geminiKey || !failures}
+            disabled={isLoading || !failures}
             className="w-full py-3 bg-app-info text-black font-bold rounded"
           >
-            {isLoading ? "Mapping..." : "Map My Triggers"}
+            {isLoading ? "Mapping Protocols..." : "Generate Recovery Protocols"}
           </button>
         </div>
       ) : (
