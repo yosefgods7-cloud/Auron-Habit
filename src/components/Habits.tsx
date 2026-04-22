@@ -14,6 +14,7 @@ export function Habits({ onEditHabit }: HabitsProps) {
   const settings = useStore(state => state.settings);
   const archiveHabit = useStore(state => state.archiveHabit);
   const updateHabit = useStore(state => state.updateHabit);
+  const deleteHabit = useStore(state => state.deleteHabit);
   const logs = useStore(state => state.logs);
   
   const [isCoachOpen, setIsCoachOpen] = useState(false);
@@ -22,6 +23,7 @@ export function Habits({ onEditHabit }: HabitsProps) {
   
   const [autopsyModalId, setAutopsyModalId] = useState<string | null>(null);
   const [expandedHabitId, setExpandedHabitId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ id: string, type: 'archive' | 'delete' } | null>(null);
 
   const activeHabits = habits.filter(h => !h.archived);
   
@@ -155,9 +157,7 @@ Format: numbered list, each point max 25 words. No intro.`,
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm('Archive this habit? It keeps historical data.')) {
-                          archiveHabit(habit.id);
-                        }
+                        setConfirmAction({ id: habit.id, type: 'archive' });
                       }}
                       className="flex-1 flex flex-col items-center justify-center py-2 text-app-text-muted hover:text-app-orange transition-colors"
                       title="Archive Habit"
@@ -168,9 +168,7 @@ Format: numbered list, each point max 25 words. No intro.`,
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm('Delete this habit AND all its history forever?')) {
-                          useStore.getState().deleteHabit(habit.id);
-                        }
+                        setConfirmAction({ id: habit.id, type: 'delete' });
                       }}
                       className="flex-1 flex flex-col items-center justify-center py-2 text-app-text-muted hover:text-app-danger transition-colors"
                       title="Delete Habit"
@@ -252,6 +250,42 @@ Format: numbered list, each point max 25 words. No intro.`,
       )}
       
       {autopsyModalId && <AutopsyModal habitId={autopsyModalId} onClose={() => setAutopsyModalId(null)} />}
+
+      {confirmAction && (
+        <div className="fixed inset-0 z-[200] bg-black bg-opacity-80 flex items-center justify-center p-4">
+          <div className="bg-app-bg border border-app-border rounded-xl w-full max-w-sm p-6 text-center">
+            <h3 className="text-xl font-bold mb-2">Are you sure?</h3>
+            <p className="text-sm text-app-text-muted mb-6">
+              {confirmAction.type === 'delete' 
+                ? 'This will delete the habit AND all its history forever.' 
+                : 'Archive this habit? It keeps historical data.'}
+            </p>
+            <div className="flex gap-4">
+              <button 
+                onClick={(e) => { e.stopPropagation(); setConfirmAction(null); }} 
+                className="flex-1 py-3 rounded border border-app-border font-bold uppercase text-xs text-app-text-main hover:bg-app-surface transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirmAction.type === 'delete') {
+                    deleteHabit(confirmAction.id);
+                  } else {
+                    archiveHabit(confirmAction.id);
+                  }
+                  setConfirmAction(null);
+                  setExpandedHabitId(null);
+                }} 
+                className={cn("flex-1 py-3 rounded text-app-bg font-bold uppercase text-xs transition-colors", confirmAction.type === 'delete' ? 'bg-app-danger hover:bg-opacity-80' : 'bg-app-orange hover:bg-opacity-80')}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
