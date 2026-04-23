@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../lib/store';
 import { cn } from '../lib/utils';
 import { format } from 'date-fns';
@@ -6,6 +6,7 @@ import { callGemini } from '../lib/gemini';
 import { getMomentumData, calculateForgeScore } from '../lib/momentum';
 import { ResistanceModal } from './ResistanceModal';
 import { GamePlanModal } from './GamePlanModal';
+import { MetricsCalendar } from './MetricsCalendar';
 import { getStaticDailyQuote } from '../lib/quotes';
 
 export function Arena() {
@@ -175,7 +176,9 @@ Be direct, coach-like. No fluff. Max 100 words.`,
         const res = await callGemini(
           `Provide ONE incredibly powerful, discipline-focused "warrior" quote. New and rare, not cliché. Max 15 words. Output ONLY a valid JSON object with {"text": "...", "author": "..."}.`,
           100,
-          `quote_${today}`
+          `quote_${today}`,
+          false,
+          true // expectJson
         );
         if (!isSubscribed) return;
         let cleanStr = res.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -564,6 +567,7 @@ Reasoning: [One ruthless sentence on why this bare-minimum protocol keeps them s
 
         {/* DAILY WINS */}
         <section className="space-y-3 lg:col-span-2">
+           <MetricsCalendar />
            <div className="flex justify-between items-end border-b border-app-border pb-1">
              <h3 className="text-xs font-bold uppercase tracking-widest text-[#FFC107]">Daily Wins</h3>
              <button onClick={() => setIsAddingWin(!isAddingWin)} className="text-[10px] font-bold uppercase text-[#FFC107]">

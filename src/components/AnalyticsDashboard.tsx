@@ -8,6 +8,7 @@ import {
 import { getMomentumData } from '../lib/momentum';
 import { callGemini } from '../lib/gemini';
 import { cn } from '../lib/utils';
+import { ProtocolAnalytics } from './ProtocolAnalytics';
 
 export function AnalyticsDashboard() {
   const habits = useStore(state => state.habits);
@@ -238,6 +239,9 @@ Provide EXACTLY three distinct paragraphs:
             )}
           </div>
         </div>
+
+        {/* New: Protocol Analytics */}
+        <ProtocolAnalytics />
 
         {/* 3. Operational Calendar (Heatmap) */}
         <div className="bg-app-surface border border-app-border rounded-xl p-4 flex flex-col justify-center">

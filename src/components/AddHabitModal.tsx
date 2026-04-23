@@ -102,7 +102,10 @@ Output EXACTLY valid JSON with no markdown wrapping, structured like this:
   }
 ]
 Categories allowed: Physical, Mental, Social, Recovery, Creative, Spiritual, Productivity.`,
-        800
+        1500,
+        null,
+        true,
+        true // expectJson
       );
 
       let suggestions: any[] = [];

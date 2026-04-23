@@ -75,7 +75,7 @@ Today: Mood ${dayData.mood || 'N/A'}/5, Forge Score ${dayData.forgeScore || 0}, 
 Last 3 days: ${last3Days} | ${dayName}`;
 }
 
-export async function callGemini(prompt: string, maxTokens = 300, featureKey: string | null = null, bypassCache = false) {
+export async function callGemini(prompt: string, maxTokens = 300, featureKey: string | null = null, bypassCache = false, expectJson = false) {
   try {
     const state = useStore.getState();
     const key = process.env.GEMINI_API_KEY || state.settings.geminiKey;
@@ -102,6 +102,15 @@ export async function callGemini(prompt: string, maxTokens = 300, featureKey: st
     const context = buildContext();
     const fullPrompt = context + '\n\n' + prompt;
 
+    const generationConfig: any = {
+      maxOutputTokens: maxTokens,
+      temperature: 0.8,
+      topP: 0.9
+    };
+    if (expectJson) {
+      generationConfig.responseMimeType = "application/json";
+    }
+
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
       {
@@ -109,11 +118,7 @@ export async function callGemini(prompt: string, maxTokens = 300, featureKey: st
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: fullPrompt }] }],
-          generationConfig: {
-            maxOutputTokens: maxTokens,
-            temperature: 0.8,
-            topP: 0.9
-          }
+          generationConfig
         })
       }
     );
@@ -127,7 +132,7 @@ export async function callGemini(prompt: string, maxTokens = 300, featureKey: st
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: fullPrompt }] }],
-            generationConfig: { maxOutputTokens: maxTokens, temperature: 0.8, topP: 0.9 }
+            generationConfig
           })
         }
       );

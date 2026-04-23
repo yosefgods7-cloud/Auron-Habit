@@ -35,16 +35,59 @@ export function Intel() {
 }
 
 function ChallengesView() {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [genDescription, setGenDescription] = useState('');
   const challenges = useStore(state => state.challenges) || [];
   const startChallenge = useStore(state => state.startChallenge);
   const progressChallenge = useStore(state => state.progressChallenge);
+
+  const handleGenerate = async (customDesc?: string) => {
+    setIsGenerating(true);
+    try {
+      const prompt = customDesc 
+        ? `Generate a new "Tactical Challenge" based on this request: "${customDesc}"`
+        : `Generate a new "Tactical Challenge" targeting (Body, Mind, or Spiritual).`;
+      
+      const res = await callGemini(
+        prompt + `\nOutput EXACTLY JSON: {"name": "...", "icon": "...", "description": "...", "durationDays": number}.`, 
+        200, 
+        null, 
+        true,
+        true
+      );
+      const data = JSON.parse(res);
+      // NOTE: In a real app, this would add to the store. 
+      // For now, we simulate and alert the user.
+      alert(`Generated: ${data.name}\n${data.description}`);
+    } catch(e) {
+      console.error(e);
+      alert("Failed to generate challenge.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="bg-app-surface border border-app-border rounded-xl p-6">
         <h3 className="text-sm font-bold uppercase tracking-widest text-[#FFC107] mb-2">Tactical Challenges</h3>
-        <p className="text-xs text-app-text-muted mb-6">Opt-in to time-bound, intense protocols to earn badges.</p>
         
+        <div className="flex gap-2 mb-4">
+            <input 
+                className="flex-1 bg-app-elevated border border-app-border rounded p-2 text-xs text-white"
+                placeholder="Describe a challenge (e.g. 7 day body detox)"
+                value={genDescription}
+                onChange={e => setGenDescription(e.target.value)}
+            />
+            <button 
+                onClick={() => handleGenerate(genDescription)}
+                className="bg-app-primary px-4 py-2 text-white text-xs font-bold rounded"
+                disabled={isGenerating}
+            >
+                {isGenerating ? "..." : "Generate Custom"}
+            </button>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {challenges.map(challenge => {
             const isActive = challenge.startDate !== null && !challenge.completed;

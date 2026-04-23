@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Vault } from '../lib/vault';
 import { Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
 
