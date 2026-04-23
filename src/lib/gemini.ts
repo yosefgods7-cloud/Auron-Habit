@@ -76,32 +76,32 @@ Last 3 days: ${last3Days} | ${dayName}`;
 }
 
 export async function callGemini(prompt: string, maxTokens = 300, featureKey: string | null = null, bypassCache = false) {
-  const state = useStore.getState();
-  const key = state.settings.geminiKey;
-  if (!key) throw new Error('NO_KEY');
-
-  const today = format(new Date(), 'yyyy-MM-dd');
-
-  // Check cache
-  if (featureKey && !bypassCache) {
-    const cached = state.aiCache['ai_' + featureKey];
-    if (cached && !isCacheExpired(featureKey, cached.timestamp)) {
-      return cached.text;
-    }
-  }
-
-  // Check quota
-  const safeMeta = state.meta || {};
-  const safeUsage = (safeMeta as any).geminiUsage || {};
-  const usage = safeUsage[today] || { requests: 0 };
-  if (usage.requests >= 60) throw new Error('QUOTA_EXCEEDED');
-
-  await waitForQueue();
-
-  const context = buildContext();
-  const fullPrompt = context + '\n\n' + prompt;
-
   try {
+    const state = useStore.getState();
+    const key = state.settings.geminiKey;
+    if (!key) throw new Error('NO_KEY');
+
+    const today = format(new Date(), 'yyyy-MM-dd');
+
+    // Check cache
+    if (featureKey && !bypassCache) {
+      const cached = state.aiCache['ai_' + featureKey];
+      if (cached && !isCacheExpired(featureKey, cached.timestamp)) {
+        return cached.text;
+      }
+    }
+
+    // Check quota
+    const safeMeta = state.meta || {};
+    const safeUsage = (safeMeta as any).geminiUsage || {};
+    const usage = safeUsage[today] || { requests: 0 };
+    if (usage.requests >= 60) throw new Error('QUOTA_EXCEEDED');
+
+    await waitForQueue();
+
+    const context = buildContext();
+    const fullPrompt = context + '\n\n' + prompt;
+
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
       {
