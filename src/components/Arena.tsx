@@ -16,6 +16,7 @@ export function Arena() {
   const toggleLog = useStore(state => state.toggleLog);
   const settings = useStore(state => state.settings);
   const updateDaily = useStore(state => state.updateDaily);
+  const clearSkip = useStore(state => state.clearSkip);
   
   const today = format(new Date(), 'yyyy-MM-dd');
   const todayLogs = logs.filter(l => l.date === today);
@@ -177,7 +178,12 @@ Be direct, coach-like. No fluff. Max 100 words.`,
           `quote_${today}`
         );
         if (!isSubscribed) return;
-        const cleanStr = res.replace(/```json/g, '').replace(/```/g, '').trim();
+        let cleanStr = res.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const startIdx = cleanStr.indexOf('{');
+        const endIdx = cleanStr.lastIndexOf('}');
+        if (startIdx !== -1 && endIdx !== -1) {
+          cleanStr = cleanStr.substring(startIdx, endIdx + 1);
+        }
         const parsed = JSON.parse(cleanStr);
         setQuote(parsed);
         useStore.getState().updateDaily(today, { quote: parsed });
@@ -624,11 +630,12 @@ Reasoning: [One ruthless sentence on why this bare-minimum protocol keeps them s
                 {slotHabits.map(habit => {
                   const log = todayLogs.find(l => l.habitId === habit.id);
                   const isDone = log?.completed;
+                  const isSkipped = !!log?.skipReason && !isDone;
                   const isSurvivalFiltered = todayData.survivalMode && todayData.survivalHabits && !todayData.survivalHabits.includes(habit.id);
 
                   return (
                     <div key={habit.id} className="relative">
-                      {longPressMenu === habit.id && (
+                      {longPressMenu === habit.id && !isSkipped && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setLongPressMenu(null)} />
                           <div className="absolute top-14 right-4 bg-app-elevated border border-app-border rounded shadow-2xl z-50 p-1 min-w-[150px] animate-fade-in">
@@ -645,6 +652,25 @@ Reasoning: [One ruthless sentence on why this bare-minimum protocol keeps them s
                           </div>
                         </>
                       )}
+                      {longPressMenu === habit.id && isSkipped && (
+                        <>
+                           <div className="fixed inset-0 z-40" onClick={() => setLongPressMenu(null)} />
+                           <div className="absolute top-14 right-4 bg-app-elevated border border-app-border rounded shadow-2xl z-50 p-2 min-w-[150px] animate-fade-in">
+                             <p className="text-xs text-app-text-muted italic mb-2 px-1">Skipped: {log?.skipReason}</p>
+                             <button 
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 setLongPressMenu(null);
+                                 clearSkip(habit.id, today);
+                               }}
+                               className="w-full text-left p-2 hover:bg-app-border rounded text-sm text-app-success font-bold flex items-center justify-between"
+                             >
+                               <span>Undo Skip</span>
+                               <span className="text-[10px]">↻</span>
+                             </button>
+                           </div>
+                        </>
+                      )}
                       <button 
                         onTouchStart={() => handleStartPress(habit.id)}
                         onTouchEnd={handleCancelPress}
@@ -653,11 +679,12 @@ Reasoning: [One ruthless sentence on why this bare-minimum protocol keeps them s
                         onMouseLeave={handleCancelPress}
                         onClick={(e) => {
                           if (longPressMenu === habit.id) return;
-                          if (!isSurvivalFiltered) toggleLog(habit.id, today, habit.difficulty * 10);
+                          if (!isSurvivalFiltered && !isSkipped) toggleLog(habit.id, today, habit.difficulty * 10);
                         }}
                         className={cn(
                           "w-full flex items-center justify-between p-3 rounded-lg text-left transition-all relative overflow-hidden",
                           isSurvivalFiltered ? "opacity-30 grayscale cursor-not-allowed" :
+                          isSkipped ? "bg-app-surface border border-app-danger opacity-50 grayscale" :
                           isDone 
                             ? `bg-app-elevated border ${slot.border} border-opacity-50` 
                             : "bg-app-surface border border-app-border hover:border-app-primary hover:border-opacity-50"
@@ -673,18 +700,24 @@ Reasoning: [One ruthless sentence on why this bare-minimum protocol keeps them s
                              <div className={cn("text-[8px] text-white px-1 rounded italic bg-opacity-80", slot.color.replace('text-', 'bg-'))}>COMPLETED</div>
                           </div>
                         )}
+                        {isSkipped && (
+                          <div className="absolute top-0 right-0 p-1">
+                             <div className="text-[8px] text-white px-1 rounded italic bg-app-danger bg-opacity-80">SKIPPED</div>
+                          </div>
+                        )}
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             "w-6 h-6 rounded-full flex items-center justify-center text-[10px] transition-colors",
+                            isSkipped ? "border-2 border-app-danger text-app-danger" :
                             isDone 
                               ? `${slot.color.replace('text-', 'bg-')} text-white` 
                               : "border-2 border-app-border text-transparent"
                           )}>
-                            ✓
+                            {isSkipped ? "✕" : "✓"}
                           </div>
                           <div>
-                            <p className={cn("text-sm font-bold", isDone ? "text-app-text-main" : "text-app-text-main")}>{habit.name}</p>
-                            <p className={cn("text-[9px] uppercase font-bold", isDone ? slot.color : "text-app-text-muted")}>
+                            <p className={cn("text-sm font-bold", isDone ? "text-app-text-main" : isSkipped ? "text-app-danger line-through" : "text-app-text-main")}>{habit.name}</p>
+                            <p className={cn("text-[9px] uppercase font-bold", isDone ? slot.color : isSkipped ? "text-app-danger" : "text-app-text-muted")}>
                               {habit.difficulty * 10} XP
                             </p>
                           </div>
@@ -693,7 +726,7 @@ Reasoning: [One ruthless sentence on why this bare-minimum protocol keeps them s
                           {Array.from({ length: 5 }).map((_, i) => (
                              <div key={i} className={cn(
                                "w-1.5 h-1.5 rounded-full",
-                               i < habit.difficulty ? (isDone ? slot.color.replace('text-', 'bg-') : "bg-app-primary") : "bg-app-border"
+                               i < habit.difficulty ? (isDone ? slot.color.replace('text-', 'bg-') : isSkipped ? "bg-app-danger" : "bg-app-primary") : "bg-app-border"
                              )} />
                           ))}
                         </div>

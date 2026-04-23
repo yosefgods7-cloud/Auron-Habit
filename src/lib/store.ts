@@ -118,6 +118,7 @@ interface AppState {
   duplicateHabit: (id: string) => void;
   toggleLog: (habitId: string, date: string, xpEarned: number) => void;
   skipHabit: (habitId: string, date: string, reason: string) => void;
+  clearSkip: (habitId: string, date: string) => void;
   
   addDailyTask: (task: Omit<DailyTask, 'id' | 'createdAt'>) => void;
   updateDailyTask: (id: string, updates: Partial<DailyTask>) => void;
@@ -230,6 +231,13 @@ export const useStore = create<AppState>()(
           }];
         }
         return { logs: newLogs };
+      }),
+
+      clearSkip: (habitId, date) => set((state) => {
+         return {
+            logs: state.logs.map(l => l.habitId === habitId && l.date === date ? 
+              { ...l, skipReason: undefined } : l)
+         };
       }),
 
       addDailyTask: (task) => set((state) => ({

@@ -102,15 +102,20 @@ Output EXACTLY valid JSON with no markdown wrapping, structured like this:
   }
 ]
 Categories allowed: Physical, Mental, Social, Recovery, Creative, Spiritual, Productivity.`,
-        400
+        800
       );
 
       let suggestions: any[] = [];
       try {
-        const rawJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        let rawJson = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const startIdx = rawJson.indexOf('[');
+        const endIdx = rawJson.lastIndexOf(']');
+        if (startIdx !== -1 && endIdx !== -1) {
+          rawJson = rawJson.substring(startIdx, endIdx + 1);
+        }
         suggestions = JSON.parse(rawJson);
-      } catch(e) {
-        console.error("JSON parse error:", e);
+      } catch(e: any) {
+        console.error("JSON parse error:", e.message, text);
       }
 
       setAiSuggestions(suggestions);
