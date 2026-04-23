@@ -168,9 +168,9 @@ export const useStore = create<AppState>()(
         geminiUsage: {},
       },
       challenges: [
-        { id: 'c1', name: '7-Day Hydration', icon: '💧', description: 'Log your water intake every day for 7 days.', durationDays: 7, startDate: null, progressDays: 0, completed: false, rewardBadge: 'Hydro-Initiate' },
-        { id: 'c2', name: '14-Day Sleep Protocol', icon: '🛌', description: '7+ hours of sleep for 14 consecutive nights.', durationDays: 14, startDate: null, progressDays: 0, completed: false, rewardBadge: 'Sleep Master' },
-        { id: 'c3', name: 'Digital Detox', icon: '📵', description: 'No social media for 3 days.', durationDays: 3, startDate: null, progressDays: 0, completed: false, rewardBadge: 'Unplugged' },
+        { id: 'c1', name: '7-Day Hydration', icon: '💧', description: 'Log your water intake every day for 7 days.', durationDays: 7, startDate: null, progressDays: 0, completed: false, rewardBadge: 'Hydro-Initiate', isShared: false },
+        { id: 'c2', name: '14-Day Sleep Protocol', icon: '🛌', description: '7+ hours of sleep for 14 consecutive nights.', durationDays: 14, startDate: null, progressDays: 0, completed: false, rewardBadge: 'Sleep Master', isShared: false },
+        { id: 'c3', name: 'Digital Detox', icon: '📵', description: 'No social media for 3 days.', durationDays: 3, startDate: null, progressDays: 0, completed: false, rewardBadge: 'Unplugged', isShared: false },
       ],
       aiCache: {},
 

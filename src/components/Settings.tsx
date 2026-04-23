@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { callGemini } from '../lib/gemini';
 import { Vault } from '../lib/vault';
 import { Shield, ShieldCheck } from 'lucide-react';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 
 export function Settings() {
   const { settings, meta, updateSettings } = useStore();
@@ -92,15 +93,28 @@ export function Settings() {
     }
   };
 
-  const handleExport = () => {
-    const data = localStorage.getItem('auron-storage');
-    const blob = new Blob([data || '{}'], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `auron_backup_${format(new Date(), 'yyyy-MM-dd')}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleExport = async () => {
+    const data = localStorage.getItem('auron-storage') || '{}';
+    const fileName = `auron_backup_${format(new Date(), 'yyyy-MM-dd')}.json`;
+    
+    try {
+      await Filesystem.writeFile({
+        path: fileName,
+        data: data,
+        directory: Directory.Documents,
+        encoding: Encoding.UTF8,
+      });
+      alert(`Backup exported successfully to your Documents folder as ${fileName}`);
+    } catch (e) {
+      console.error('Native export failed, trying web fallback', e);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   const handleImport = (e: ChangeEvent<HTMLInputElement>) => {
