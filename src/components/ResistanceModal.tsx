@@ -37,20 +37,20 @@ export function ResistanceModal({ habitId, onClose }: { habitId: string, onClose
       const prompt = `Habit: '${habit.name}' | Difficulty: ${habit.difficulty}/5
 User wants to skip. Reason given: '${finalReason}'
 
-Classify this as: GENUINE (real constraint) or RESISTANCE (avoidance/excuse).
+Classify this as: GENUINE (real constraints like sickness/emergency) or RESISTANCE (avoidance/excuse).
 
-If GENUINE: Give 1 sentence of permission + 1 sentence of tomorrow's intention. Warm but brief.
+If GENUINE: Give 1 sentence of permission.
+If RESISTANCE: Name the resistance directly in 1 sharp sentence. Then offer the absolute minimum viable version of this habit (e.g. 'Just 2 minutes.'). 
 
-If RESISTANCE: Name the resistance directly in 1 sentence. Then offer the minimum viable version of this habit (e.g. '2 minutes counts.'). Then ask: 'What's the real reason?' — one pointed question.
-
-Max 55 words. Never preachy. Speak like a trusted coach.
-Format: [CLASSIFICATION]\n[Response]`;
+Output EXACTLY this format, nothing else:
+CLASSIFICATION: [GENUINE or RESISTANCE]
+RESPONSE: [Your 1-2 sentence response. Max 40 words.]`;
 
       const res = await callGemini(prompt, 120, null, true); // No cache
       
-      const isGenuine = res.includes('GENUINE');
+      const isGenuine = res.includes('CLASSIFICATION: GENUINE');
       setClassification(isGenuine ? 'GENUINE' : 'RESISTANCE');
-      setAiResponse(res.replace('GENUINE', '').replace('RESISTANCE', '').replace(/[\[\]]/g, '').trim());
+      setAiResponse(res.replace(/CLASSIFICATION:.*?\n/i, '').replace(/RESPONSE:/i, '').trim());
       
     } catch (e) {
       console.error(e);

@@ -64,12 +64,12 @@ export function Habits({ onEditHabit }: HabitsProps) {
     try {
       const today = format(new Date(), 'yyyy-MM-dd');
       const text = await callGemini(
-        `You are AURON's habit coach. Analyze this warrior's habit data and give 3 specific, actionable coaching points:
-1. Which habit needs the most urgent attention and why
-2. One habit pattern or correlation you notice
-3. One specific challenge or upgrade to try this week
-Be brutally honest. Use their actual streak/completion numbers.
-Format: numbered list, each point max 25 words. No intro.`,
+        `You are AURON's elite behavioral habit coach. Review their logged data.
+Output EXACTLY 3 specific, highly actionable coaching points formatted as a numbered list:
+1. **CRITICAL FAILURE**: Identify the precise habit failing under pressure, providing one tactical tweak to fix it.
+2. **PATTERN RECOGNITION**: Name the correlation between their best habits and their worst.
+3. **WEEKLY ESCALATION**: Pick their strongest habit and give an exact parameter to increase difficulty (e.g., +5 mins, heavier weight).
+Be brutal, analytical, and highly specific. Do not use generic motivational fluff. Max 100 words.`,
         350,
         `coach_${today}`
       );

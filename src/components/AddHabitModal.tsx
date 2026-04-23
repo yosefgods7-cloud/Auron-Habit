@@ -87,34 +87,31 @@ export function AddHabitModal({ onClose, editHabitId }: AddHabitModalProps) {
   const handleSuggest = async () => {
     setIsSuggesting(true);
     try {
+      const activeIds = habits.filter(h => !h.archived).map(h => h.name).join(', ');
       const text = await callGemini(
-        `Based on this warrior's current habits and identity, suggest 5 new habits they DON'T already have that would complement their existing system and push their growth.
-For each habit output EXACTLY this format (one per line):
-ICON | NAME | CATEGORY | DIFFICULTY(1-5) | WHY(max 10 words)
-
-Example:
-🧊 | Cold shower | Physical | 4 | Builds mental toughness daily
-
-Only suggest habits that logically fill gaps. Be specific.
-Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
-        300
+        `Based on this warrior's current active habits (${activeIds || 'None yet'}) and identity statement (${settings.identityStatement || 'Growth focused'}), suggest 3 NEW habits they DON'T already have.
+Make them highly effective, specific, and actionable. They must complement their existing schedule.
+Output EXACTLY valid JSON with no markdown wrapping, structured like this:
+[
+  {
+    "icon": "📝",
+    "name": "Evening Brain Dump",
+    "category": "Mental",
+    "difficulty": 2,
+    "description": "Write down all thoughts to clear the mind before sleeping."
+  }
+]
+Categories allowed: Physical, Mental, Social, Recovery, Creative, Spiritual, Productivity.`,
+        400
       );
 
-      const suggestions = text.split('\n')
-        .filter(l => l.includes('|'))
-        .map(line => {
-          const parts = line.split('|').map(p => p.trim());
-          if (parts.length >= 5) {
-            return {
-              icon: parts[0] || '💪',
-              name: parts[1] || 'New Habit',
-              category: parts[2] as HabitCategory || 'Physical',
-              difficulty: parseInt(parts[3]) || 2,
-              why: parts[4] || ''
-            };
-          }
-          return null;
-        }).filter(Boolean);
+      let suggestions: any[] = [];
+      try {
+        const rawJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        suggestions = JSON.parse(rawJson);
+      } catch(e) {
+        console.error("JSON parse error:", e);
+      }
 
       setAiSuggestions(suggestions);
     } catch (err) {
@@ -125,11 +122,11 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
   };
 
   const handleUseSuggestion = (s: any) => {
-    setIcon(s.icon);
-    setName(s.name);
-    setCategory(s.category as HabitCategory);
-    setDifficulty(s.difficulty);
-    // Optionally auto-submit or just fill
+    setIcon(s.icon || '💪');
+    setName(s.name || '');
+    setCategory((s.category as HabitCategory) || 'Physical');
+    setDifficulty(s.difficulty || 2);
+    setDescription(s.description || '');
   };
 
   return (
@@ -164,14 +161,19 @@ Categories: Physical/Mental/Social/Recovery/Creative/Spiritual/Productivity`,
                   type="button"
                   key={idx}
                   onClick={() => handleUseSuggestion(s)}
-                  className="flex items-center gap-3 p-3 bg-app-elevated border border-app-primary border-opacity-30 rounded-lg hover:bg-app-border text-left transition-colors"
+                  className="flex flex-col gap-2 p-3 bg-app-elevated border border-app-primary border-opacity-30 rounded-lg hover:bg-app-border text-left transition-colors group"
                 >
-                  <span className="text-2xl">{s.icon}</span>
-                  <div className="flex-1">
-                    <p className="font-bold text-sm text-app-text-main">{s.name}</p>
-                    <p className="text-[10px] text-app-text-muted uppercase">{s.category} • {s.difficulty * 10} XP</p>
+                  <div className="flex items-center gap-3 w-full">
+                    <span className="text-2xl">{s.icon}</span>
+                    <div className="flex-1">
+                      <p className="font-bold text-sm text-app-text-main">{s.name}</p>
+                      <p className="text-[10px] text-app-text-muted uppercase">{s.category} • {s.difficulty * 10} XP</p>
+                    </div>
+                    <span className="text-app-primary text-xs font-bold shrink-0">USE →</span>
                   </div>
-                  <span className="text-app-primary text-xs font-bold">USE →</span>
+                  {s.description && (
+                    <p className="text-xs text-app-text-muted italic border-t border-app-border pt-2 w-full">{s.description}</p>
+                  )}
                 </button>
               ))}
             </div>

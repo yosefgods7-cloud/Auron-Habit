@@ -282,10 +282,11 @@ export function Settings() {
             <div className="flex gap-2">
               <input 
                 type="password"
-                value={apiKeyInput}
+                value={process.env.GEMINI_API_KEY && !settings.geminiKey ? 'Provided by Environment' : apiKeyInput}
+                disabled={!!process.env.GEMINI_API_KEY && !settings.geminiKey}
                 onChange={e => setApiKeyInput(e.target.value)}
                 placeholder="AIzaSy..."
-                className="flex-1 bg-app-elevated border border-app-border rounded p-3 text-white focus:outline-none focus:border-app-primary"
+                className="flex-1 bg-app-elevated border border-app-border rounded p-3 text-white focus:outline-none focus:border-app-primary disabled:opacity-50"
               />
               {settings.geminiKey ? (
                 <button 
@@ -294,7 +295,7 @@ export function Settings() {
                 >
                   Remove
                 </button>
-              ) : (
+              ) : (process.env.GEMINI_API_KEY ? null : (
                 <button 
                   onClick={handleTestKey}
                   disabled={isTesting || !apiKeyInput.trim()}
@@ -302,13 +303,14 @@ export function Settings() {
                 >
                   {isTesting ? '✦ Testing...' : 'Save & Test'}
                 </button>
-              )}
+              ))}
             </div>
             {testResult === 'success' && <p className="text-xs text-app-success">✓ {testMsg}</p>}
             {testResult === 'error' && <p className="text-xs text-app-danger">✗ {testMsg}</p>}
+            {process.env.GEMINI_API_KEY && !settings.geminiKey && <p className="text-xs text-app-info">✦ AURON AI Features are active and powered by Google AI Studio.</p>}
           </div>
 
-          {settings.geminiKey && (
+          {(process.env.GEMINI_API_KEY || settings.geminiKey) && (
             <div className="pt-4 border-t border-app-border space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-app-text-main">Today's Usage</h3>

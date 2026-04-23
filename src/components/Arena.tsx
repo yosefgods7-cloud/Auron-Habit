@@ -85,7 +85,7 @@ const isSunday = format(new Date(), 'EEEE') === 'Sunday';
   const [isHardQLoading, setIsHardQLoading] = useState(false);
 
   const loadHardQuestion = async () => {
-    if (!settings.geminiKey || !isSunday) {
+    if (!(process.env.GEMINI_API_KEY || settings.geminiKey) || !isSunday) {
       alert("Please configure your free Gemini API key in Settings -> AI");
       return;
     }
@@ -119,7 +119,7 @@ Output ONLY the question. No intro. No context. Max 40 words.`;
   };
 
   const loadBrief = async () => {
-    if (!settings.geminiKey) {
+    if (!(process.env.GEMINI_API_KEY || settings.geminiKey)) {
       alert("Please configure your free Gemini API key in Settings -> AI");
       return;
     }
@@ -128,8 +128,14 @@ Output ONLY the question. No intro. No context. Max 40 words.`;
     setIsBriefLoading(true);
     try {
       const text = await callGemini(
-        "Write a 2-sentence personalized morning brief for this warrior. Reference their actual habits and streaks. Be direct, motivating, coach-like. No fluff. End with one sharp action directive. Max 60 words.", 
-        150, 
+        `Write a highly personalized, tactical morning brief for this warrior. Reference their actual habits, streaks, and recent forge score momentum. 
+Output format:
+- STATUS: (1 sentence brutal summary of their current momentum)
+- STRENGTH: (1 sentence identifying their best performing habit/category)
+- WEAKNESS: (1 sentence calling out exactly what routine they skip most or need to protect today)
+- DIRECTIVE: (1 sharp, non-negotiable action for today).
+Be direct, coach-like. No fluff. Max 100 words.`, 
+        200, 
         `brief_${today}`
       );
       setAiBrief(text);
@@ -222,14 +228,13 @@ Output ONLY the question. No intro. No context. Max 40 words.`;
       
       const prompt = `${contextStr}
       
-The warrior is overwhelmed today and can only do 2-3 habits.
-Select the 2-3 habits that matter MOST using this priority:
-1. Highest streak at risk of breaking (streak × difficulty)
-2. Highest XP yield
-3. Most foundational to their identity/other habits
+The warrior is in a state of failure/overwhelm today. They can only execute 2 or 3 baseline habits total to survive the day.
+Select the absolute most critical habits to protect their momentum.
 
-Output ONLY the exact habit names, one per line, then ONE sentence explanation of why these 3 protect the most momentum.
-No intro. No padding. Max 60 words.`;
+Output EXACTLY this format, with nothing else:
+Habit: [Exact Habit Name from list]
+Habit: [Exact Habit Name from list]
+Reasoning: [One ruthless sentence on why this bare-minimum protocol keeps them strictly in the game.]`;
 
       const response = await callGemini(prompt, 150, `survival_${today}`);
       const lines = response.split('\n').map(l => l.trim()).filter(l => l);
@@ -237,9 +242,17 @@ No intro. No padding. Max 60 words.`;
       // Match lines to habit IDs
       const survivalIds: string[] = [];
       for (const line of lines) {
-        const matchedHabit = activeHabits.find(h => line.toLowerCase().includes(h.name.toLowerCase()));
-        if (matchedHabit && survivalIds.length < 3) {
-          survivalIds.push(matchedHabit.id);
+        if (line.startsWith('Habit:')) {
+           const namePart = line.replace('Habit:', '').trim().toLowerCase();
+           const matchedHabit = activeHabits.find(h => h.name.toLowerCase() === namePart || namePart.includes(h.name.toLowerCase()));
+           if (matchedHabit && survivalIds.length < 3) {
+             survivalIds.push(matchedHabit.id);
+           }
+        } else {
+           const matchedHabit = activeHabits.find(h => line.toLowerCase().includes(h.name.toLowerCase()));
+           if (matchedHabit && survivalIds.length < 3 && !line.startsWith('Reasoning:')) {
+             survivalIds.push(matchedHabit.id);
+           }
         }
       }
       
@@ -308,7 +321,7 @@ No intro. No padding. Max 60 words.`;
             </div>
           )}
 
-          {(todayData.gamePlan || isSunday || settings.geminiKey) && (
+          {(todayData.gamePlan || isSunday || process.env.GEMINI_API_KEY || settings.geminiKey) && (
             <div className="border-t border-app-border pt-3 mt-1">
               {todayData.gamePlan ? (
                 <div className="text-left">
@@ -347,7 +360,7 @@ No intro. No padding. Max 60 words.`;
                  ) : aiBrief ? (
                     <div className="text-left">
                        <span className="text-[10px] font-bold uppercase tracking-tighter text-app-primary mb-1 block">✦ Forge Brief</span>
-                       <p className="text-xs text-app-text-main font-sans leading-relaxed">{aiBrief}</p>
+                        <p className="text-xs text-app-text-main font-sans leading-relaxed whitespace-pre-wrap">{aiBrief}</p>
                     </div>
                  ) : (
                     <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 py-1">
@@ -422,7 +435,33 @@ No intro. No padding. Max 60 words.`;
         {/* DAILY ONCE-OFF TASKS */}
         <section className="space-y-3 lg:col-span-2">
            <div className="flex justify-between items-end border-b border-app-border pb-1">
-             <h3 className="text-xs font-bold uppercase tracking-widest text-app-text-muted">Today's Targets</h3>
+             <div className="flex items-center gap-3">
+               <h3 className="text-xs font-bold uppercase tracking-widest text-app-text-muted">Today's Targets</h3>
+               {(process.env.GEMINI_API_KEY || settings.geminiKey) && (
+                 <button 
+                   type="button"
+                   onClick={async (e) => {
+                     const btn = e.currentTarget;
+                     const oldText = btn.innerHTML;
+                     btn.innerHTML = "✦ Analyzing...";
+                     btn.disabled = true;
+                     try {
+                        const res = await callGemini(`Review the user's active habits and momentum. Suggest ONE highly difficult, outside-the-box one-off "Daily Challenge" task they can complete today to step out of their comfort zone or improve their life setup. Do not repeat their regular habits. Max 10 words. Output ONLY the raw task name, no quotes, no markdown.`);
+                        setNewTaskTitle(res.trim());
+                        setIsAddingTask(true);
+                     } catch(e) {
+                        alert("Could not generate target.");
+                     } finally {
+                        btn.innerHTML = oldText;
+                        btn.disabled = false;
+                     }
+                   }}
+                   className="text-[10px] bg-app-elevated text-app-primary border border-app-primary/30 px-2 py-0.5 rounded font-bold uppercase tracking-wider hover:bg-app-primary hover:text-white transition-colors disabled:opacity-50"
+                 >
+                   ✦ AI Challenge
+                 </button>
+               )}
+             </div>
              <button onClick={() => setIsAddingTask(!isAddingTask)} className="text-[10px] font-bold uppercase text-app-primary">
                + Add Target
              </button>

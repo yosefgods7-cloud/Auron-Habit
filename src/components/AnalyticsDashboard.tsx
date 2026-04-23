@@ -146,7 +146,7 @@ export function AnalyticsDashboard() {
   const [isLoading, setIsLoading] = useState(false);
 
   const runAnalysis = async () => {
-    const key = settings.geminiKey;
+    const key = process.env.GEMINI_API_KEY || settings.geminiKey;
     if (!key) {
       alert("Please configure your free Gemini API key in Settings -> AI");
       return;
@@ -163,11 +163,10 @@ export function AnalyticsDashboard() {
         `Act as an elite behavioral analyst. Look at my exact metrics:
 ${JSON.stringify(dataPayload, null, 2)}
 
-Provide:
-1. "ARCHETYPE PERFORMANCE" (1 short paragraph identifying where I'm succeeding and what category is dragging me down)
-2. "CASCADING VECTORS" (Analyze the inter-analysis correlations. Why does one failing group affect the other?)
-3. "NEW PROTOCOL SUGGESTION" (1 highly specific, realistic tactical integration to fix the weakest link).
-Limit to concise tactical output. Brutally honest.`,
+Provide EXACTLY three distinct paragraphs:
+**ARCHETYPE PERFORMANCE**: Brutally analyze what category forms my strongest vector and which category is dragging my entire system down. Use specific percentages.
+**CASCADING VECTORS**: Find the correlation. Explain exactly why failing at one specific group is causing a negative chain reaction to another group. Name the groups.
+**TACTICAL PROTOCOL DRAFT**: Supply one intensely specific new daily challenge/rule I must enforce starting immediately to patch the weakest link. Limit to concise tactical output. Max 200 words total.`,
         350,
         `deep_analytics_${new Date().toISOString().split('T')[0]}`
       );
@@ -305,8 +304,10 @@ Limit to concise tactical output. Brutally honest.`,
         )}
 
         {analysis ? (
-          <div className="text-sm text-app-text-main font-sans leading-relaxed whitespace-pre-wrap mt-4">
-            {analysis}
+          <div className="text-sm text-app-text-main font-sans leading-relaxed mt-4 space-y-4">
+            {analysis.split('\n').filter(p => p.trim()).map((paragraph, i) => (
+              <p key={i} dangerouslySetInnerHTML={{ __html: paragraph.replace(/\*\*(.*?)\*\*/g, '<strong class="text-app-primary">$1</strong>') }} />
+            ))}
           </div>
         ) : (
           <div className="text-center py-4 mt-2">

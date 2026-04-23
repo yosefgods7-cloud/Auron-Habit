@@ -117,7 +117,7 @@ function DnaView({ longestStreak }: { longestStreak: number }) {
 
   const handleRunProfiler = async () => {
     if (!isUnlocked) return;
-    const key = useStore.getState().settings.geminiKey;
+    const key = process.env.GEMINI_API_KEY || useStore.getState().settings.geminiKey;
     if (!key) {
       alert("Please configure your free Gemini API key in Settings -> AI");
       return;
@@ -197,7 +197,7 @@ function TriggersView() {
 
   const handleMap = async () => {
     if (!failures) return;
-    const key = useStore.getState().settings.geminiKey;
+    const key = process.env.GEMINI_API_KEY || useStore.getState().settings.geminiKey;
     if (!key) {
       alert("Please configure your free Gemini API key in Settings -> AI");
       return;
@@ -208,9 +208,13 @@ function TriggersView() {
       
 Build an If/Then Trigger Map. For each failure point, map out an exact "If [Trigger], Then [Minimal Recovery Action]" protocol.
       
-Format as a bulleted list. The recovery action MUST be extremely easy (under 2 minutes). Be direct and tactical. Max 80 words.`;
+Format exactly like this, using bullet points for each pair:
+- **IF**: [Trigger]
+- **THEN MICO-ACTION**: [A strictly 2-minute or less recovery action]
 
-      const res = await callGemini(prompt, 180, 'trigger_map', true);
+The micro-action must be incredibly specific and effortless to start. No vague advice. Max 100 words.`;
+
+      const res = await callGemini(prompt, 200, 'trigger_map', true);
       setResult(res);
     } catch(e: any) {
       alert(e.message || "Failed to generate triggers");

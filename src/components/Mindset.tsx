@@ -36,7 +36,7 @@ export function Mindset() {
 
   const handleGetInsight = async () => {
     if (!reflectionText.trim() || aiStoicInsight) return;
-    const key = useStore.getState().settings.geminiKey;
+    const key = process.env.GEMINI_API_KEY || useStore.getState().settings.geminiKey;
     if (!key) {
       alert("Please configure your free Gemini API key in Settings -> AI");
       return;
@@ -58,7 +58,7 @@ export function Mindset() {
   };
 
   const handleAnalyzePattern = async () => {
-    const key = useStore.getState().settings.geminiKey;
+    const key = process.env.GEMINI_API_KEY || useStore.getState().settings.geminiKey;
     if (!key) {
       alert("Please configure your free Gemini API key in Settings -> AI");
       return;
@@ -66,12 +66,12 @@ export function Mindset() {
     setIsAnalysisLoading(true);
     try {
       const text = await callGemini(
-        `Analyze the pattern in 3 bullet points:
-• What mindset dimension is consistently weakest and what it signals
-• A correlation between their mindset scores and habit performance
-• One specific practice to target their lowest dimension
-Max 20 words per bullet. Be precise and direct.`,
-        250,
+        `Review the user's logged mood, forge score, and habit metrics. Then write an intensive psychological breakdown in 3 specific bullet points:
+- What emotional or mindset dimension is consistently dragging them down, and what it signals.
+- A hard, undeniable correlation you see between their mood logging and their habit skips/completion rates.
+- ONE highly specific psychological or behavioral practice they must do today to break this specific trap.
+Use intense, clinical, behavioral psychology language. Do not output vague affirmations.`,
+        300,
         `mindset_${today}`
       );
       setAiAnalysis(text);
@@ -84,10 +84,10 @@ Max 20 words per bullet. Be precise and direct.`,
   };
 
   const handleGapReport = async () => {
-    const key = useStore.getState().settings.geminiKey;
+    const key = process.env.GEMINI_API_KEY || useStore.getState().settings.geminiKey;
     if (!key) {
-       alert("Please configure your free Gemini API key in Settings -> AI");
-       return;
+      alert("Please configure your free Gemini API key in Settings -> AI");
+      return;
     }
     setIsGapLoading(true);
     try {
@@ -113,10 +113,10 @@ Format clearly. Max 100 words.`, 250, `gap_${format(new Date(), 'yyyy-MM')}`, tr
   };
 
   const handleAccountabilityLetter = async () => {
-    const key = useStore.getState().settings.geminiKey;
+    const key = process.env.GEMINI_API_KEY || useStore.getState().settings.geminiKey;
     if (!key) {
-       alert("Please configure your free Gemini API key in Settings -> AI");
-       return;
+      alert("Please configure your free Gemini API key in Settings -> AI");
+      return;
     }
     setIsLetterLoading(true);
     try {

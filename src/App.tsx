@@ -61,7 +61,7 @@ export default function App() {
             </div>
           </div>
           <div className="px-2 md:px-3 py-1 bg-app-elevated border border-app-border rounded flex items-center gap-1 md:gap-2">
-            {settings.geminiKey && <span className="text-app-primary mr-1" title="AURON Intelligence Active">✦</span>}
+            {(process.env.GEMINI_API_KEY || settings.geminiKey) && <span className="text-app-primary mr-1" title="AURON Intelligence Active">✦</span>}
             <span className="text-[10px] font-bold text-app-info uppercase">Lvl {useStore.getState().meta.level}</span>
             <span className="text-xs font-bold text-app-text-main truncate max-w-[60px] md:max-w-[80px]">{settings.userName}</span>
           </div>

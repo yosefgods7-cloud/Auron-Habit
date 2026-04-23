@@ -78,7 +78,7 @@ Last 3 days: ${last3Days} | ${dayName}`;
 export async function callGemini(prompt: string, maxTokens = 300, featureKey: string | null = null, bypassCache = false) {
   try {
     const state = useStore.getState();
-    const key = state.settings.geminiKey;
+    const key = process.env.GEMINI_API_KEY || state.settings.geminiKey;
     if (!key) throw new Error('NO_KEY');
 
     const today = format(new Date(), 'yyyy-MM-dd');
