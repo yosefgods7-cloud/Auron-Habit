@@ -118,23 +118,37 @@ RESPONSE: [Your 1-2 sentence response. Max 40 words.]`;
               <p className="text-sm mt-2 leading-relaxed">{aiResponse}</p>
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-3">
               <button 
                 onClick={() => {
                   onClose();
                 }}
-                className="flex-1 py-3 bg-app-primary text-white font-bold rounded"
+                className="w-full py-3 bg-app-primary text-white font-bold rounded"
               >
-                I'll Do It
+                I'll Do the Full Protocol
               </button>
+              
+              {classification === 'RESISTANCE' && habit.nanoGoal && (
+                 <button 
+                   onClick={() => {
+                     // Log as completed with note showing it was Nano
+                     toggleLog(habit.id, today, true, 100, `Done as Nano Goal: ${habit.nanoGoal}`);
+                     onClose();
+                   }}
+                   className="w-full py-3 bg-app-orange text-black font-bold rounded"
+                 >
+                   Do Nano-Goal: {habit.nanoGoal}
+                 </button>
+              )}
+
               <button 
                 onClick={() => {
                   skipHabit(habit.id, today, finalReason);
                   onClose();
                 }}
-                className="flex-1 py-3 bg-transparent border border-app-border text-app-text-muted hover:text-app-danger font-bold rounded"
+                className="w-full py-3 bg-transparent border border-app-border text-app-text-muted hover:text-app-danger font-bold rounded"
               >
-                Skip Today
+                Skip Entirely
               </button>
             </div>
           </div>

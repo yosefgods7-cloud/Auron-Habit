@@ -9,12 +9,15 @@ import { getMomentumData } from '../lib/momentum';
 import { callGemini } from '../lib/gemini';
 import { cn } from '../lib/utils';
 import { ProtocolAnalytics } from './ProtocolAnalytics';
+import { getKeystoneHabits } from '../lib/analytics';
 
 export function AnalyticsDashboard() {
   const habits = useStore(state => state.habits);
   const logs = useStore(state => state.logs);
   const daily = useStore(state => state.daily);
   const settings = useStore(state => state.settings);
+
+  const keystone = useMemo(() => getKeystoneHabits(), [habits, logs]);
 
   // 1. Radar Chart Data (Hexagonal category metrics)
   const categoryData = useMemo(() => {
@@ -217,6 +220,21 @@ Provide EXACTLY three distinct paragraphs:
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* NEW: Keystone Anchors */}
+        <div className="bg-app-surface border border-app-border rounded-xl p-4 flex flex-col">
+          <h3 className="text-sm font-bold uppercase tracking-widest text-[#FFC107] mb-2">Keystone Anchors</h3>
+          <p className="text-xs text-app-text-muted mb-4">Habits linked to your highest daily success rate:</p>
+          <div className="space-y-3">
+             {keystone.map(k => (
+                 <div key={k.name} className="flex justify-between items-center text-xs py-1 border-b border-app-border/50 pb-2">
+                     <span className="text-app-text-main font-bold">{k.name}</span>
+                     <span className="font-mono text-[#FFC107] bg-[#FFC107]/10 px-2 py-1 rounded">{Math.round(k.impact * 100)}% Impact</span>
+                 </div>
+             ))}
+             {keystone.length === 0 && <p className="text-xs text-app-text-muted">Not enough data to calculate keystones.</p>}
+          </div>
+        </div>
+
         {/* 2. Hexagonal Metric (Category Radar) */}
         <div className="bg-app-surface border border-app-border rounded-xl p-4 flex flex-col">
           <h3 className="text-sm font-bold uppercase tracking-widest text-app-primary mb-2">Category Mastery (30d)</h3>

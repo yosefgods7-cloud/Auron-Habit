@@ -21,6 +21,7 @@ export function AddHabitModal({ onClose, editHabitId }: AddHabitModalProps) {
   const [timeslot, setTimeslot] = useState<Timeslot>('morning');
   const [difficulty, setDifficulty] = useState(1);
   const [protocol, setProtocol] = useState('General');
+  const [nanoGoal, setNanoGoal] = useState('');
   const [reminderTime, setReminderTime] = useState('');
   const [description, setDescription] = useState('');
   const [alarmEnabled, setAlarmEnabled] = useState(false);
@@ -35,6 +36,7 @@ export function AddHabitModal({ onClose, editHabitId }: AddHabitModalProps) {
          setTimeslot(h.timeslot);
          setDifficulty(h.difficulty);
          setProtocol(h.protocol);
+         setNanoGoal(h.nanoGoal || '');
          setReminderTime(h.reminderTime || '');
          setDescription(h.description || '');
          setAlarmEnabled(h.alarmEnabled || false);
@@ -57,6 +59,7 @@ export function AddHabitModal({ onClose, editHabitId }: AddHabitModalProps) {
         icon,
         category,
         protocol: protocol.trim() || 'General',
+        nanoGoal: nanoGoal.trim() || undefined,
         timeslot,
         difficulty,
         description: description.trim(),
@@ -69,6 +72,7 @@ export function AddHabitModal({ onClose, editHabitId }: AddHabitModalProps) {
         icon,
         category,
         protocol: protocol.trim() || 'General',
+        nanoGoal: nanoGoal.trim() || undefined,
         frequency: { type: 'daily' },
         timeslot,
         color: 'var(--color-app-primary)',
@@ -248,6 +252,21 @@ Categories allowed: Physical, Mental, Social, Recovery, Creative, Spiritual, Pro
               className="w-full bg-app-elevated border border-app-border rounded p-3 text-white focus:outline-none focus:border-app-primary"
               placeholder="e.g. Morning Routine, Work, Health"
             />
+          </div>
+
+          <div>
+             <label className="block text-xs font-bold text-app-text-muted uppercase mb-1 flex justify-between">
+                <span>Nano-Goal (Friction Reducer)</span>
+                <span className="text-[10px] text-app-text-main/50">Optional</span>
+             </label>
+             <input 
+                type="text" 
+                value={nanoGoal}
+                onChange={(e) => setNanoGoal(e.target.value)}
+                className="w-full bg-app-elevated border border-app-border rounded p-3 text-white focus:outline-none focus:border-app-orange"
+                placeholder="e.g. Just do 2 pushups, Read 1 page"
+             />
+             <p className="text-[10px] text-app-text-muted mt-1 leading-tight">If you try to skip the habit, you will be offered this 2-minute alternative instead.</p>
           </div>
 
           <div>

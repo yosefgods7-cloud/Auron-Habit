@@ -6,6 +6,7 @@ import { callGemini } from '../lib/gemini';
 import { getMomentumData, calculateForgeScore } from '../lib/momentum';
 import { ResistanceModal } from './ResistanceModal';
 import { GamePlanModal } from './GamePlanModal';
+import { AutopsyModal } from './AutopsyModal';
 import { MetricsCalendar } from './MetricsCalendar';
 import { getStaticDailyQuote } from '../lib/quotes';
 
@@ -64,6 +65,7 @@ export function Arena() {
   const [isSurvivalLoading, setIsSurvivalLoading] = useState(false);
   
   const [skipHabitModal, setSkipHabitModal] = useState<string | null>(null);
+  const [autopsyModal, setAutopsyModal] = useState<string | null>(null);
   const [longPressMenu, setLongPressMenu] = useState<string | null>(null);
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
 
@@ -281,7 +283,13 @@ Reasoning: [One ruthless sentence on why this bare-minimum protocol keeps them s
   ];
 
   return (
-    <div className="flex flex-col p-4 md:p-6 gap-6">
+    <div className="flex flex-col p-4 md:p-6 gap-6 relative">
+      {skipHabitModal && (
+        <ResistanceModal habitId={skipHabitModal} onClose={() => setSkipHabitModal(null)} />
+      )}
+      {autopsyModal && (
+        <AutopsyModal habitId={autopsyModal} onClose={() => setAutopsyModal(null)} />
+      )}
       <section className="flex flex-col lg:grid lg:grid-cols-12 gap-6 items-center bg-app-surface border border-app-border rounded-xl p-4 md:p-6">
         <div className="lg:col-span-3 flex flex-col items-center justify-center w-full relative">
           <div className="absolute top-0 right-0">
@@ -661,6 +669,17 @@ Reasoning: [One ruthless sentence on why this bare-minimum protocol keeps them s
                            <div className="fixed inset-0 z-40" onClick={() => setLongPressMenu(null)} />
                            <div className="absolute top-14 right-4 bg-app-elevated border border-app-border rounded shadow-2xl z-50 p-2 min-w-[150px] animate-fade-in">
                              <p className="text-xs text-app-text-muted italic mb-2 px-1">Skipped: {log?.skipReason}</p>
+                             <button 
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 setLongPressMenu(null);
+                                 setAutopsyModal(habit.id);
+                               }}
+                               className="w-full text-left p-2 hover:bg-app-orange border border-transparent hover:border-app-orange rounded text-sm text-app-orange font-bold flex items-center justify-between mb-2 shadow hover:text-black transition-colors"
+                             >
+                               <span>Run AI Autopsy</span>
+                               <span className="text-[10px]">☢</span>
+                             </button>
                              <button 
                                onClick={(e) => {
                                  e.stopPropagation();
