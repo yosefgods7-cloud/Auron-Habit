@@ -11,6 +11,7 @@ export interface Habit {
   icon: string;
   category: HabitCategory;
   protocol: string;
+  nanoGoal?: string; // High-resistance alternative
   frequency: { type: 'daily' | 'days' | 'times', days?: boolean[], times?: number };
   timeslot: Timeslot;
   color: string;
@@ -81,6 +82,7 @@ export interface Challenge {
   progressDays: number;
   completed: boolean;
   rewardBadge: string;
+  isShared: boolean;
 }
 
 interface AppState {

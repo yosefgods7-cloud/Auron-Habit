@@ -1,5 +1,26 @@
 import { useStore } from './store';
 
+export function getKeystoneHabits() {
+    const state = useStore.getState();
+    const habits = state.habits;
+    const logs = state.logs;
+
+    if (habits.length === 0) return [];
+
+    // Calculate correlation between each habit and overall success (ForgeScore)
+    // A keystone habit is one whose completion correlates highest with overall daily success.
+    
+    return habits.map(h => {
+        const habitLogs = logs.filter(l => l.habitId === h.id);
+        // Simplified correlation: (days completed AND day successful) / (days completed)
+        // This is a placeholder for a more complex correlation matrix
+        return {
+            name: h.name,
+            impact: Math.random() // Placeholder for actual correlation logic
+        };
+    }).sort((a, b) => b.impact - a.impact).slice(0, 3);
+}
+
 export function getProtocolPerformance() {
     const state = useStore.getState();
     const habits = state.habits;
