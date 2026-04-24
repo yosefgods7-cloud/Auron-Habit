@@ -132,14 +132,14 @@ Output ONLY the question. No intro. No context. Max 40 words.`;
     setIsBriefLoading(true);
     try {
       const text = await callGemini(
-        `Write a highly personalized, tactical morning brief for this warrior. Reference their actual habits, streaks, and recent forge score momentum. 
+        `Write a highly personalized, tactical morning brief for this warrior. You MUST deeply analyze their current 'Mood' score, their recent 3-day momentum, and their current habit streaks. If their mood is low, acknowledge the resistance but hold them to their standard, perhaps reminding them about Nano Goals. If their mood is high, demand excellence and acceleration.
 Output format:
-- STATUS: (1 sentence brutal summary of their current momentum)
-- STRENGTH: (1 sentence identifying their best performing habit/category)
-- WEAKNESS: (1 sentence calling out exactly what routine they skip most or need to protect today)
-- DIRECTIVE: (1 sharp, non-negotiable action for today).
-Be direct, coach-like. No fluff. Max 100 words.`, 
-        200, 
+- PSYCHE: (1 sentence analyzing their current mood versus their momentum)
+- STRENGTH: (1 sentence identifying their best performing habit)
+- VULNERABILITY: (1 sentence calling out the habit most at risk today based on their mood)
+- DIRECTIVE: (1 sharp action for today. If mood is low, suggest a nano-goal as an absolute minimum).
+Be direct, coach-like. No fluff. Max 120 words.`, 
+        250, 
         `brief_${today}`
       );
       setAiBrief(text);
