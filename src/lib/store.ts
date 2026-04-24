@@ -118,7 +118,7 @@ interface AppState {
   archiveHabit: (id: string) => void;
   deleteHabit: (id: string) => void;
   duplicateHabit: (id: string) => void;
-  toggleLog: (habitId: string, date: string, xpEarned: number) => void;
+  toggleLog: (habitId: string, date: string, xpEarned: number, note?: string) => void;
   skipHabit: (habitId: string, date: string, reason: string) => void;
   clearSkip: (habitId: string, date: string) => void;
   
@@ -204,17 +204,17 @@ export const useStore = create<AppState>()(
         return { habits: [...state.habits, newHabit] };
       }),
 
-      toggleLog: (habitId, date, xpEarned) => set((state) => {
+      toggleLog: (habitId, date, xpEarned, note) => set((state) => {
         const existingInfo = state.logs.find(l => l.habitId === habitId && l.date === date);
         const isCompleted = existingInfo ? existingInfo.completed : false;
         
         let newLogs;
         if (existingInfo) {
           newLogs = state.logs.map(l => l.habitId === habitId && l.date === date ? 
-            { ...l, completed: !isCompleted, partial: !isCompleted ? 1 : 0, xpEarned: !isCompleted ? xpEarned : 0, skipReason: !isCompleted ? undefined : l.skipReason } : l);
+            { ...l, completed: !isCompleted, partial: !isCompleted ? 1 : 0, xpEarned: !isCompleted ? xpEarned : 0, skipReason: !isCompleted ? undefined : l.skipReason, note: note || l.note } : l);
         } else {
           newLogs = [...state.logs, {
-            habitId, date, completed: true, partial: 1, note: '', completedAt: new Date().toISOString(), xpEarned
+            habitId, date, completed: true, partial: 1, note: note || '', completedAt: new Date().toISOString(), xpEarned
           }];
         }
         

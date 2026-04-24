@@ -338,7 +338,7 @@ Reasoning: [One ruthless sentence on why this bare-minimum protocol keeps them s
             </div>
           )}
 
-          {(todayData.gamePlan || isSunday || process.env.GEMINI_API_KEY || settings.geminiKey) && (
+          {true && (
             <div className="border-t border-app-border pt-3 mt-1">
               {todayData.gamePlan ? (
                 <div className="text-left">
@@ -454,7 +454,6 @@ Reasoning: [One ruthless sentence on why this bare-minimum protocol keeps them s
            <div className="flex justify-between items-end border-b border-app-border pb-1">
              <div className="flex items-center gap-3">
                <h3 className="text-xs font-bold uppercase tracking-widest text-app-text-muted">Today's Targets</h3>
-               {(process.env.GEMINI_API_KEY || settings.geminiKey) && (
                  <button 
                    type="button"
                    onClick={async (e) => {
@@ -466,8 +465,8 @@ Reasoning: [One ruthless sentence on why this bare-minimum protocol keeps them s
                         const res = await callGemini(`Review the user's active habits and momentum. Suggest ONE highly difficult, outside-the-box one-off "Daily Challenge" task they can complete today to step out of their comfort zone or improve their life setup. Do not repeat their regular habits. Max 10 words. Output ONLY the raw task name, no quotes, no markdown.`);
                         setNewTaskTitle(res.trim());
                         setIsAddingTask(true);
-                     } catch(e) {
-                        alert("Could not generate target.");
+                     } catch(e: any) {
+                        alert(e.message || "Could not generate target.");
                      } finally {
                         btn.innerHTML = oldText;
                         btn.disabled = false;
@@ -477,7 +476,6 @@ Reasoning: [One ruthless sentence on why this bare-minimum protocol keeps them s
                  >
                    ✦ AI Challenge
                  </button>
-               )}
              </div>
              <button onClick={() => setIsAddingTask(!isAddingTask)} className="text-[10px] font-bold uppercase text-app-primary">
                + Add Target

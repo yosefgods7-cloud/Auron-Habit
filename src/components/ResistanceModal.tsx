@@ -132,7 +132,7 @@ RESPONSE: [Your 1-2 sentence response. Max 40 words.]`;
                  <button 
                    onClick={() => {
                      // Log as completed with note showing it was Nano
-                     toggleLog(habit.id, today, true, 100, `Done as Nano Goal: ${habit.nanoGoal}`);
+                     toggleLog(habit.id, today, Math.floor(habit.difficulty * 5), `Done as Nano Goal: ${habit.nanoGoal}`);
                      onClose();
                    }}
                    className="w-full py-3 bg-app-orange text-black font-bold rounded"
